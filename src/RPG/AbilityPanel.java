@@ -18,18 +18,15 @@ public class AbilityPanel extends JPanel {
         setBackground(Color.DARK_GRAY);
         setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
 
-        // Coins label
         coinsLabel = new JLabel("Coins: " + player.getCoins(), JLabel.CENTER);
         coinsLabel.setForeground(Color.WHITE);
         coinsLabel.setFont(new Font("Arial", Font.BOLD, 24));
         add(coinsLabel);
 
-        // Upgrade buttons
         damageButton = createUpgradeButton("Damage");
         hpButton = createUpgradeButton("HP");
         defenseButton = createUpgradeButton("Defense");
 
-        // Add buttons to panel
         add(damageButton);
         add(hpButton);
         add(defenseButton);
