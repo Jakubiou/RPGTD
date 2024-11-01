@@ -33,8 +33,11 @@ public class GamePanel extends JPanel implements ActionListener {
     private SpawningEnemies spawningEnemies;
     private Collisions collisions;
     private GameOverPanel gameOverPanel;
+    public static final int SCALE_FACTOR = 4;
+    private static final int CAMERA_WIDTH = PANEL_WIDTH / SCALE_FACTOR;
+    private static final int CAMERA_HEIGHT = PANEL_HEIGHT / SCALE_FACTOR;
 
-
+    private int cameraX, cameraY;
 
     public GamePanel(RPGGame game, Player player) {
         this.game = game;
@@ -93,7 +96,8 @@ public class GamePanel extends JPanel implements ActionListener {
         blockImages = new Image[26];
         try {
             for (int i = 0; i < blockImages.length; i++) {
-                blockImages[i] = ImageIO.read(new File("res/rpg/background/Block" + i + ".png"));
+                Image original = ImageIO.read(new File("res/rpg/background/Block" + i + ".png"));
+                blockImages[i] = original.getScaledInstance(BLOCK_SIZE, BLOCK_SIZE, Image.SCALE_SMOOTH);
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -377,12 +381,18 @@ public class GamePanel extends JPanel implements ActionListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Collections.sort(enemies, Comparator.comparingInt(Enemy::getY));
-        drawBackground(g);
-        drawPlayer(g);
-        drawEnemies(g);
-        drawArrows(g);
-        drawUI(g);
+        updateCamera();
+        Graphics2D g2d = (Graphics2D) g;
+
+        g2d.translate(-cameraX, -cameraY);
+
+        drawBackground(g2d);
+        drawPlayer(g2d);
+        drawEnemies(g2d);
+        drawArrows(g2d);
+        drawUI(g2d);
+
+        g2d.translate(cameraX, cameraY);
 
         Iterator<Enemy> enemyIterator = enemies.iterator();
         while (enemyIterator.hasNext()) {
@@ -401,6 +411,15 @@ public class GamePanel extends JPanel implements ActionListener {
             menuButton.setVisible(false);
         }
     }
+
+    private void updateCamera() {
+        int targetCameraX = player.getX() - CAMERA_WIDTH * 2;
+        int targetCameraY = player.getY() - CAMERA_HEIGHT * 2;
+
+        cameraX = Math.max(0, Math.min(targetCameraX, mapWidth * BLOCK_SIZE - CAMERA_WIDTH));
+        cameraY = Math.max(0, Math.min(targetCameraY, mapHeight * BLOCK_SIZE - CAMERA_HEIGHT));
+    }
+
 
     private void drawBackground(Graphics g) {
         for (int y = 0; y < mapHeight; y++) {
