@@ -416,8 +416,8 @@ public class GamePanel extends JPanel implements ActionListener {
         int targetCameraX = player.getX() - CAMERA_WIDTH * 2;
         int targetCameraY = player.getY() - CAMERA_HEIGHT * 2;
 
-        cameraX = Math.max(0, Math.min(targetCameraX, mapWidth * BLOCK_SIZE - CAMERA_WIDTH));
-        cameraY = Math.max(0, Math.min(targetCameraY, mapHeight * BLOCK_SIZE - CAMERA_HEIGHT));
+        cameraX = Math.max(0, Math.min(targetCameraX, mapWidth * BLOCK_SIZE - PANEL_WIDTH));
+        cameraY = Math.max(0, Math.min(targetCameraY, mapHeight * BLOCK_SIZE - PANEL_HEIGHT));
     }
 
 
