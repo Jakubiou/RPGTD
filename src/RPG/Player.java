@@ -31,10 +31,10 @@ public class Player {
     private Image hpBarFrame2;
     private Image hpBarFrame3;
 
-    public static final int PANEL_WIDTH = 1530;
-    public static final int PANEL_HEIGHT = 800;
+    public static final int PANEL_WIDTH = 2700;
+    public static final int PANEL_HEIGHT = 2200;
     private boolean dashing = false;
-    private int dashDistance = 100;
+    private int dashDistance = 1000;
     private int dashSpeed = 20;
     private int dashDirectionX = 0, dashDirectionY = 0;
     private int dashProgress = 0;

@@ -110,8 +110,8 @@ public class Enemy {
     }
 
     public boolean isOffScreen() {
-        int screenWidth = 1530;
-        int screenHeight = 800;
+        int screenWidth = 2700;
+        int screenHeight = 2200;
         return (x + getWidth() < 0 || x > screenWidth || y + getHeight() < 0 || y > screenHeight);
     }
 
