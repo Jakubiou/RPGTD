@@ -294,8 +294,8 @@ public class GamePanel extends JPanel implements ActionListener {
             @Override
             public void mousePressed(MouseEvent e) {
                 if (!isPaused) {
-                    int mouseX = e.getX();
-                    int mouseY = e.getY();
+                    int mouseX = e.getX() + cameraX;
+                    int mouseY = e.getY() + cameraY;
                     arrows.add(new Arrow(player.getX() + Player.WIDTH / 2, player.getY() + Player.HEIGHT / 2, mouseX, mouseY));
                 }
             }
@@ -322,7 +322,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
         switch (waveNumber) {
             case 1:
-                spawningEnemies.spawnEnemies(0, 0, 0, 0,1);
+                spawningEnemies.spawnEnemies(100, 100, 100, 100,11100);
                 break;
             case 2:
                 spawningEnemies.spawnEnemies(15, 2, 1, 2,1);
