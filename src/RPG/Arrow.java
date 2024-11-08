@@ -11,7 +11,7 @@ public class Arrow {
     private int targetX, targetY;
     private int speed = 10;
     private double distanceTravelled = 0;
-    private static final double MAX_DISTANCE = 3000;
+    private static final double MAX_DISTANCE = 30000;
     private Image[] bulletTextures;
     private int currentFrame = 0;
     private long lastFrameChange = 0;
@@ -48,7 +48,7 @@ public class Arrow {
             lastFrameChange = currentTime;
         }
 
-        return x < 0 || x > GamePanel.PANEL_WIDTH || y < 0 || y > GamePanel.PANEL_HEIGHT || distanceTravelled >= MAX_DISTANCE;
+        return x < 0 || x > GamePanel.PANEL_WIDTH * 4 || y < 0 || y > GamePanel.PANEL_HEIGHT * 4 || distanceTravelled >= MAX_DISTANCE;
     }
 
     public void draw(Graphics g) {
