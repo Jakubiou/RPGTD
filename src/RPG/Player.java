@@ -3,10 +3,15 @@ package RPG;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import static com.sun.java.accessibility.util.AWTEventMonitor.addMouseMotionListener;
 
 public class Player {
     public static int WIDTH = 31;
@@ -21,7 +26,7 @@ public class Player {
     private int coins = 0;
     private int damage = 5;
     private int attackSpeed = 5;
-    private int defense = 0;
+    private int defense = 100;
     private boolean up, down, left, right;
     private Image[] rightTextures, leftTextures, idleTextures, upTextures, downTextures;
     private int currentFrame = 0;
@@ -40,6 +45,8 @@ public class Player {
     private int dashProgress = 0;
     private long dashCooldown = 5000;
     private long lastDashTime = 0;
+    private boolean meleeMode = false;
+    private int mouseX, mouseY;
 
     private int maxHp;
 
@@ -61,7 +68,21 @@ public class Player {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        addMouseMotionListener(new MouseMotionListener() {
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                mouseX = e.getX();
+                mouseY = e.getY();
+            }
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                mouseX = e.getX();
+                mouseY = e.getY();
+            }
+        });
     }
+
 
     private Image[] loadTextures(String... filenames) {
         Image[] textures = new Image[filenames.length];
@@ -101,7 +122,7 @@ public class Player {
 
         int hpBarWidth = 200;
         int hpBarHeight = 20;
-        int hpBarX = 1300;
+        int hpBarX = GamePanel.PANEL_WIDTH - hpBarWidth - 10;
         int hpBarY = 29;
 
 
@@ -140,14 +161,73 @@ public class Player {
             int dividerX = hpBarX + (i * hpBarWidth / 10);
             g.drawLine(dividerX, hpBarY - 3, dividerX, hpBarY + hpBarHeight);
         }
+        if (meleeMode) {
+            int attackRadius = 50;
+            int arcAngle = 90;
+
+            // Calculate angle based on mouse position
+            int centerX = x + WIDTH / 2;
+            int centerY = y + HEIGHT / 2;
+            double angleToMouse = Math.toDegrees(Math.atan2(mouseY - centerY, mouseX - centerX));
+
+            g.setColor(new Color(255, 0, 0, 150));
+            g.fillArc(centerX - attackRadius, centerY - attackRadius, attackRadius * 2, attackRadius * 2,
+                    (int) angleToMouse - arcAngle / 2, arcAngle);
+        }
     }
+
+    public void toggleAttackMode() {
+        meleeMode = !meleeMode;
+    }
+
+    public void attack(CopyOnWriteArrayList<Enemy> enemies) {
+        if (meleeMode) {
+            meleeAttack(enemies);
+        }
+    }
+
+    private void meleeAttack(CopyOnWriteArrayList<Enemy> enemies) {
+        int attackRadius = 50;
+        int attackAngle = 90;
+        int centerX = x + WIDTH / 2;
+        int centerY = y + HEIGHT / 2;
+
+        double angleToMouse = Math.toDegrees(Math.atan2(mouseY - centerY, mouseX - centerX));
+
+        for (Enemy enemy : enemies) {
+            double distance = Math.hypot(enemy.getX() - centerX, enemy.getY() - centerY);
+            double angleToEnemy = Math.toDegrees(Math.atan2(enemy.getY() - centerY, enemy.getX() - centerX)) - angleToMouse;
+
+            angleToEnemy = (angleToEnemy + 360) % 360;
+            if (angleToEnemy > 180) angleToEnemy -= 360;
+
+            if (distance <= attackRadius && Math.abs(angleToEnemy) <= attackAngle / 2) {
+                enemy.hit(damage);
+            }
+        }
+    }
+    private void drawDashCooldown(Graphics g) {
+        long timeSinceLastDash = System.currentTimeMillis() - lastDashTime;
+        if (timeSinceLastDash < dashCooldown) {
+            double percentage = 1 - (double) timeSinceLastDash / dashCooldown;
+
+            int radius = 30;
+            int centerX = 50;
+            int centerY = GamePanel.PANEL_HEIGHT - 50;
+
+            g.setColor(Color.RED);
+            g.fillArc(centerX - radius, centerY - radius, radius * 2, radius * 2, 90, (int) (360 * percentage));
+        }
+    }
+
     private void drawExplosionCooldown(Graphics g) {
         long timeSinceLastExplosion = System.currentTimeMillis() - lastExplosionTime;
         if (timeSinceLastExplosion < explosionCooldown) {
             double percentage = 1 - (double) timeSinceLastExplosion / explosionCooldown;
 
             int radius = 30;
-            int centerX = 100, centerY = PANEL_HEIGHT - 50;
+            int centerX = 100;
+            int centerY = GamePanel.PANEL_HEIGHT - 50;
 
             g.setColor(Color.ORANGE);
             g.fillArc(centerX - radius, centerY - radius, radius * 2, radius * 2, 90, (int) (360 * percentage));
@@ -156,20 +236,6 @@ public class Player {
     public ArrayList<Explosion> getExplosions() {
         return explosions;
     }
-
-    private void drawDashCooldown(Graphics g) {
-        long timeSinceLastDash = System.currentTimeMillis() - lastDashTime;
-        if (timeSinceLastDash < dashCooldown) {
-            double percentage = 1 - (double) timeSinceLastDash / dashCooldown;
-
-            int radius = 30;
-            int centerX = 50, centerY = PANEL_HEIGHT - 50;
-
-            g.setColor(Color.RED);
-            g.fillArc(centerX - radius, centerY - radius, radius * 2, radius * 2, 90, (int) (360 * percentage));
-        }
-    }
-
 
     public void move() {
         boolean moving = false;
@@ -364,5 +430,9 @@ public class Player {
 
     public int getHeal() {
         return heal;
+    }
+
+    public boolean isMeleeMode() {
+        return meleeMode;
     }
 }
