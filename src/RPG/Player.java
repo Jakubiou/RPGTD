@@ -24,7 +24,7 @@ public class Player {
     private int speed = 5;
     private int heal = 0;
     private int coins = 0;
-    private int damage = 5;
+    private int damage = 50;
     private int attackSpeed = 5;
     private int defense = 100;
     private boolean up, down, left, right;
@@ -47,8 +47,10 @@ public class Player {
     private long lastDashTime = 0;
     private boolean meleeMode = false;
     private int mouseX, mouseY;
+    private long meleeAttackStartTime = 0;
 
     private int maxHp;
+    private static final long MELEE_ATTACK_DURATION = 200;
 
     public Player(int x, int y, int hp) {
         this.x = x;
@@ -161,51 +163,44 @@ public class Player {
             int dividerX = hpBarX + (i * hpBarWidth / 10);
             g.drawLine(dividerX, hpBarY - 3, dividerX, hpBarY + hpBarHeight);
         }
-        if (meleeMode) {
-            int attackRadius = 50;
-            int arcAngle = 90;
-
-            // Calculate angle based on mouse position
-            int centerX = x + WIDTH / 2;
-            int centerY = y + HEIGHT / 2;
-            double angleToMouse = Math.toDegrees(Math.atan2(mouseY - centerY, mouseX - centerX));
-
-            g.setColor(new Color(255, 0, 0, 150));
-            g.fillArc(centerX - attackRadius, centerY - attackRadius, attackRadius * 2, attackRadius * 2,
-                    (int) angleToMouse - arcAngle / 2, arcAngle);
+        if (isMeleeMode && System.currentTimeMillis() - meleeAttackStartTime < MELEE_ATTACK_DURATION) {
+            meleeAttack.draw((Graphics2D) g);
         }
     }
 
-    public void toggleAttackMode() {
-        meleeMode = !meleeMode;
+    private boolean isMeleeMode = false;
+    private MeleeAttack meleeAttack = new MeleeAttack(0, 0, 0);
+
+    public void toggleMeleeMode() {
+        isMeleeMode = !isMeleeMode;
     }
 
-    public void attack(CopyOnWriteArrayList<Enemy> enemies) {
-        if (meleeMode) {
-            meleeAttack(enemies);
-        }
+    public boolean isMeleeMode() {
+        return isMeleeMode;
+    }
+    public boolean isMeleeAttackActive() {
+        return isMeleeMode;
     }
 
-    private void meleeAttack(CopyOnWriteArrayList<Enemy> enemies) {
-        int attackRadius = 50;
-        int attackAngle = 90;
+    public MeleeAttack getMeleeAttack() {
+        return meleeAttack;
+    }
+
+    public void performMeleeAttack(int mouseX, int mouseY) {
+        if (!isMeleeMode) return;
+
         int centerX = x + WIDTH / 2;
         int centerY = y + HEIGHT / 2;
+        int angle = (int) Math.toDegrees(Math.atan2(mouseY - centerY, mouseX - centerX));
 
-        double angleToMouse = Math.toDegrees(Math.atan2(mouseY - centerY, mouseX - centerX));
-
-        for (Enemy enemy : enemies) {
-            double distance = Math.hypot(enemy.getX() - centerX, enemy.getY() - centerY);
-            double angleToEnemy = Math.toDegrees(Math.atan2(enemy.getY() - centerY, enemy.getX() - centerX)) - angleToMouse;
-
-            angleToEnemy = (angleToEnemy + 360) % 360;
-            if (angleToEnemy > 180) angleToEnemy -= 360;
-
-            if (distance <= attackRadius && Math.abs(angleToEnemy) <= attackAngle / 2) {
-                enemy.hit(damage);
-            }
-        }
+        meleeAttack.setPosition(centerX, centerY, angle);
+        meleeAttackStartTime = System.currentTimeMillis();
     }
+
+    public long getMeleeAttackStartTime() {
+        return meleeAttackStartTime;
+    }
+
     private void drawDashCooldown(Graphics g) {
         long timeSinceLastDash = System.currentTimeMillis() - lastDashTime;
         if (timeSinceLastDash < dashCooldown) {
@@ -430,9 +425,5 @@ public class Player {
 
     public int getHeal() {
         return heal;
-    }
-
-    public boolean isMeleeMode() {
-        return meleeMode;
     }
 }
