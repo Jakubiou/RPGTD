@@ -3,20 +3,21 @@ package RPG;
 import java.awt.*;
 
 public class EnemyProjectile {
-    private int x, y;
+    private double x, y;
     private double directionX, directionY;
     private double speed = 10;
     private boolean active = true;
-    private static final int SCREEN_WIDTH = 1530;
-    private static final int SCREEN_HEIGHT = 800;
+    private static final int MAP_WIDTH = 6120;
+    private static final int MAP_HEIGHT = 3200;
 
-    public EnemyProjectile(int x, int y, int targetX, int targetY) {
-        this.x = x;
-        this.y = y;
+    public EnemyProjectile(int startX, int startY, int playerX, int playerY) {
+        this.x = startX;
+        this.y = startY;
 
-        double deltaX = targetX - x;
-        double deltaY = targetY - y;
+        double deltaX = playerX - startX;
+        double deltaY = playerY - startY;
         double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
         if (distance > 0) {
             directionX = deltaX / distance;
             directionY = deltaY / distance;
@@ -27,7 +28,7 @@ public class EnemyProjectile {
         x += directionX * speed;
         y += directionY * speed;
 
-        if (x < 0 || x > SCREEN_WIDTH || y < 0 || y > SCREEN_HEIGHT) {
+        if (x < 0 || x > MAP_WIDTH || y < 0 || y > MAP_HEIGHT) {
             active = false;
         }
     }
@@ -46,10 +47,10 @@ public class EnemyProjectile {
 
     public void draw(Graphics g) {
         g.setColor(Color.RED);
-        g.fillOval(x, y, 10, 10);
+        g.fillOval((int)x - GamePanel.cameraX, (int)y - GamePanel.cameraY, 10, 10);
     }
 
     public Rectangle getCollider() {
-        return new Rectangle(x, y, 10, 10);
+        return new Rectangle((int)x, (int)y, 10, 10);
     }
 }
