@@ -68,7 +68,6 @@ public class Collisions {
                         if (enemy.getHp() <= 0) {
                             enemiesToRemove.add(enemy);
                             GamePanel.killCountPlus();
-                            System.out.println("killCount ++");
                             player.earnCoins(10);
                         }
                     }
@@ -87,7 +86,6 @@ public class Collisions {
                     if (enemy.getHp() <= 0) {
                         enemiesToRemove.add(enemy);
                         GamePanel.killCountPlus();
-                        System.out.println("killCount ++");
                         player.earnCoins(10);
                         break;
                     }
@@ -119,7 +117,6 @@ public class Collisions {
                         if (enemy.getHp() <= 0) {
                             enemiesToRemove.add(enemy);
                             GamePanel.killCountPlus();
-                            System.out.println("killCount ++");
                             player.earnCoins(10);
                         }
                         break;
