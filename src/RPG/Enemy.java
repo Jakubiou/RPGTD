@@ -17,7 +17,7 @@ public class Enemy {
     public static final int SHOOTING_SIZE = 60;
     protected int x;
     protected int y;
-    private int hp;
+    private double hp;
     protected double speed;
     private boolean isAlive;
     private Type type;
@@ -38,7 +38,7 @@ public class Enemy {
         NORMAL, GIANT, SMALL, SHOOTING,SLIME
     }
 
-    public Enemy(int x, int y, int hp, Type type) {
+    public Enemy(int x, int y, double hp, Type type) {
         this.x = x;
         this.y = y;
         this.hp = hp;
@@ -228,7 +228,7 @@ public class Enemy {
         hp -= damage;
     }
 
-    public int getHp() {
+    public double getHp() {
         return hp;
     }
 
