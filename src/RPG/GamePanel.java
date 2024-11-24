@@ -40,6 +40,7 @@ public class GamePanel extends JPanel implements ActionListener {
     public static int cameraX, cameraY;
     private static int killCount;
 
+
     public GamePanel(RPGGame game, Player player) {
         this.game = game;
         this.player = player;
@@ -342,6 +343,7 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     private void nextWave() {
+        spawningEnemies.stopCurrentSpawn();
         enemies.clear();
         waveNumber++;
         arrows.clear();
@@ -349,10 +351,10 @@ public class GamePanel extends JPanel implements ActionListener {
 
         switch (waveNumber) {
             case 1:
-                spawningEnemies.spawnEnemies(1000, 1000, 1000, 1000,1000);
+                spawningEnemies.spawnEnemies(0, 0, 0, 10,0);
                 break;
             case 2:
-                spawningEnemies.spawnEnemies(15, 2, 1, 2,1);
+                spawningEnemies.spawnEnemies(5, 2, 1, 2,1);
                 break;
             case 3:
                 spawningEnemies.spawnEnemies(7, 3, 1, 5,2);
@@ -388,9 +390,7 @@ public class GamePanel extends JPanel implements ActionListener {
                 }
             }
 
-            boolean allEnemiesDead = enemies.stream().noneMatch(Enemy::isAlive);
-
-            if (killCount > 0 && !gameOver) {
+            if (killCount > waveNumber * 10 && !gameOver) {
                 stopGame();
                 nextWaveButton.setVisible(true);
                 abilityPanel.setVisible(true);
@@ -483,8 +483,8 @@ public class GamePanel extends JPanel implements ActionListener {
     private void drawUI(Graphics g) {
         g.setColor(Color.WHITE);
         g.setFont(new Font("Arial", Font.BOLD, 20));
-        g.drawString("Wave: " + waveNumber, 10, 20);
-        g.drawString("Coins: " + player.getCoins(), 10, 40);
+        g.drawString("Wave: " + waveNumber, 10 + cameraX, 20 + cameraY);
+        g.drawString("Coins: " + player.getCoins(), 10 + cameraX, 40 + cameraY);
     }
 
     public int getCameraX() {
