@@ -19,7 +19,7 @@ public class Collisions {
         this.gameOver = false;
     }
 
-    public void checkCollisions() {
+    public void checkCollisions(int killCount) {
         Rectangle playerCollider = player.getCollider();
         List<Enemy> enemiesToRemove = new ArrayList<>();
         List<Arrow> arrowsToRemove = new ArrayList<>();
@@ -40,8 +40,44 @@ public class Collisions {
                 }
             }
         }
+        if (player.isMeleeAttackActive() && System.currentTimeMillis() - player.getMeleeAttackStartTime() < 200) {
+            MeleeAttack meleeAttack = player.getMeleeAttack();
+            int meleeX = meleeAttack.getX();
+            int meleeY = meleeAttack.getY();
+            int meleeRadius = meleeAttack.getRadius();
+            int meleeAngle = meleeAttack.getAngle();
 
-        for (Enemy enemy : enemies) {
+            for (Enemy enemy : enemies) {
+                int dx = enemy.getX() - meleeX;
+                int dy = enemy.getY() - meleeY;
+                double distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance <= meleeRadius) {
+                    double enemyAngle = Math.toDegrees(Math.atan2(dy, dx));
+                    if (enemyAngle < 0) {
+                        enemyAngle += 360;
+                    }
+
+                    double normalizedAttackAngle = (meleeAngle + 360) % 360;
+
+                    double angleDifference = Math.abs(normalizedAttackAngle - enemyAngle);
+                    angleDifference = Math.min(angleDifference, 360 - angleDifference);
+
+                    if (angleDifference <= 45) {
+                        enemy.hit(player.getDamage());
+                        if (enemy.getHp() <= 0) {
+                            enemiesToRemove.add(enemy);
+                            GamePanel.killCountPlus();
+                            System.out.println("killCount ++");
+                            player.earnCoins(10);
+                        }
+                    }
+                }
+            }
+        }
+
+
+                for (Enemy enemy : enemies) {
             enemy.moveTowards(player.getX(), player.getY());
             Rectangle enemyCollider = enemy.getCollider();
 
@@ -50,6 +86,8 @@ public class Collisions {
                     enemy.hit(100);
                     if (enemy.getHp() <= 0) {
                         enemiesToRemove.add(enemy);
+                        GamePanel.killCountPlus();
+                        System.out.println("killCount ++");
                         player.earnCoins(10);
                         break;
                     }
@@ -80,6 +118,8 @@ public class Collisions {
                         arrowsToRemove.add(arrow);
                         if (enemy.getHp() <= 0) {
                             enemiesToRemove.add(enemy);
+                            GamePanel.killCountPlus();
+                            System.out.println("killCount ++");
                             player.earnCoins(10);
                         }
                         break;
