@@ -6,7 +6,7 @@ import java.awt.geom.Arc2D;
 public class MeleeAttack {
     private int x, y;
     private int angle;
-    private int radius = 50;
+    private int radius = 100;
 
     public MeleeAttack(int x, int y, int angle) {
         this.x = x;
