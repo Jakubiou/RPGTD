@@ -24,9 +24,9 @@ public class Player {
     private int speed = 5;
     private int heal = 0;
     private int coins = 0;
-    private int damage = 50;
+    private int damage = 1;
     private int attackSpeed = 5;
-    private int defense = 100;
+    private int defense = 0;
     private boolean up, down, left, right;
     private Image[] rightTextures, leftTextures, idleTextures, upTextures, downTextures;
     private int currentFrame = 0;
@@ -50,7 +50,7 @@ public class Player {
     private long meleeAttackStartTime = 0;
 
     private int maxHp;
-    private static final long MELEE_ATTACK_DURATION = 200;
+    private static final long MELEE_ATTACK_DURATION = 50;
 
     public Player(int x, int y, int hp) {
         this.x = x;
@@ -124,8 +124,8 @@ public class Player {
 
         int hpBarWidth = 200;
         int hpBarHeight = 20;
-        int hpBarX = GamePanel.PANEL_WIDTH - hpBarWidth - 10;
-        int hpBarY = 29;
+        int hpBarX = GamePanel.PANEL_WIDTH - hpBarWidth - 10 + GamePanel.cameraX;
+        int hpBarY = 29 + GamePanel.cameraY;
 
 
         g.setColor(Color.BLACK);
@@ -207,8 +207,8 @@ public class Player {
             double percentage = 1 - (double) timeSinceLastDash / dashCooldown;
 
             int radius = 30;
-            int centerX = 50;
-            int centerY = GamePanel.PANEL_HEIGHT - 50;
+            int centerX = 50 + GamePanel.cameraX;
+            int centerY = GamePanel.PANEL_HEIGHT - 50 + GamePanel.cameraY;
 
             g.setColor(Color.RED);
             g.fillArc(centerX - radius, centerY - radius, radius * 2, radius * 2, 90, (int) (360 * percentage));
@@ -221,8 +221,8 @@ public class Player {
             double percentage = 1 - (double) timeSinceLastExplosion / explosionCooldown;
 
             int radius = 30;
-            int centerX = 100;
-            int centerY = GamePanel.PANEL_HEIGHT - 50;
+            int centerX = 100 + GamePanel.cameraX;
+            int centerY = GamePanel.PANEL_HEIGHT - 50 + GamePanel.cameraY;
 
             g.setColor(Color.ORANGE);
             g.fillArc(centerX - radius, centerY - radius, radius * 2, radius * 2, 90, (int) (360 * percentage));
