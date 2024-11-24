@@ -7,7 +7,7 @@ public class RPGGame extends JFrame {
     private Player player;
 
     public RPGGame() {
-        player = new Player(Player.PANEL_WIDTH / 2, Player.PANEL_HEIGHT / 2, 100);
+        player = new Player(Player.PANEL_WIDTH, Player.PANEL_HEIGHT, 100);
         gamePanel = new GamePanel(this, player);
         add(gamePanel);
         pack();
