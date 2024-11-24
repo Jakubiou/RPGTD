@@ -37,7 +37,8 @@ public class GamePanel extends JPanel implements ActionListener {
     private static final int CAMERA_WIDTH = PANEL_WIDTH / SCALE_FACTOR;
     private static final int CAMERA_HEIGHT = PANEL_HEIGHT / SCALE_FACTOR;
 
-    private int cameraX, cameraY;
+    public static int cameraX, cameraY;
+    private static int killCount;
 
     public GamePanel(RPGGame game, Player player) {
         this.game = game;
@@ -290,16 +291,41 @@ public class GamePanel extends JPanel implements ActionListener {
             }
         });
 
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                int key = e.getKeyCode();
+                if (key == KeyEvent.VK_1) {
+                    player.toggleMeleeMode();
+                } else if (key == KeyEvent.VK_2) {
+                    player.toggleMeleeMode();
+                } else {
+                    player.keyPressed(e);
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                player.keyReleased(e);
+            }
+        });
+
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
                 if (!isPaused) {
                     int mouseX = e.getX() + cameraX;
                     int mouseY = e.getY() + cameraY;
-                    arrows.add(new Arrow(player.getX() + Player.WIDTH / 2, player.getY() + Player.HEIGHT / 2, mouseX, mouseY));
+
+                    if (player.isMeleeMode()) {
+                        player.performMeleeAttack(mouseX, mouseY);
+                    } else {
+                        arrows.add(new Arrow(player.getX() + Player.WIDTH / 2, player.getY() + Player.HEIGHT / 2, mouseX, mouseY));
+                    }
                 }
             }
         });
+
 
 
         timer = new Timer(20, this);
@@ -319,10 +345,11 @@ public class GamePanel extends JPanel implements ActionListener {
         enemies.clear();
         waveNumber++;
         arrows.clear();
+        killCount = 0;
 
         switch (waveNumber) {
             case 1:
-                spawningEnemies.spawnEnemies(100, 100, 100, 100,11100);
+                spawningEnemies.spawnEnemies(1000, 1000, 1000, 1000,1000);
                 break;
             case 2:
                 spawningEnemies.spawnEnemies(15, 2, 1, 2,1);
@@ -352,7 +379,7 @@ public class GamePanel extends JPanel implements ActionListener {
             }
             player.move();
 
-            collisions.checkCollisions();
+            collisions.checkCollisions(killCount);
             gameOver = collisions.isGameOver();
 
             for (Enemy enemy : enemies) {
@@ -363,7 +390,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
             boolean allEnemiesDead = enemies.stream().noneMatch(Enemy::isAlive);
 
-            if (allEnemiesDead && spawningEnemies.areAllEnemiesSpawned() && !gameOver) {
+            if (killCount > 0 && !gameOver) {
                 stopGame();
                 nextWaveButton.setVisible(true);
                 abilityPanel.setVisible(true);
@@ -377,6 +404,9 @@ public class GamePanel extends JPanel implements ActionListener {
             repaint();
         }
     }
+    public static void killCountPlus(){
+        killCount++;
+    }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -387,10 +417,10 @@ public class GamePanel extends JPanel implements ActionListener {
         g2d.translate(-cameraX, -cameraY);
 
         drawBackground(g2d);
-        drawPlayer(g2d);
         drawEnemies(g2d);
         drawArrows(g2d);
         drawUI(g2d);
+        drawPlayer(g2d);
 
         g2d.translate(cameraX, cameraY);
 
@@ -455,5 +485,17 @@ public class GamePanel extends JPanel implements ActionListener {
         g.setFont(new Font("Arial", Font.BOLD, 20));
         g.drawString("Wave: " + waveNumber, 10, 20);
         g.drawString("Coins: " + player.getCoins(), 10, 40);
+    }
+
+    public int getCameraX() {
+        return cameraX;
+    }
+
+    public int getCameraY() {
+        return cameraY;
+    }
+
+    public Player getPlayer() {
+        return player;
     }
 }
