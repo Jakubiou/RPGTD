@@ -97,8 +97,8 @@ public class SpawningEnemies {
         int topBound = cameraY - GamePanel.BLOCK_SIZE * 2;
         int bottomBound = cameraY + GamePanel.PANEL_HEIGHT + GamePanel.BLOCK_SIZE;
 
-        for (int y = 0; y < GamePanel.mapHeight; y++) {
-            for (int x = 0; x < GamePanel.mapWidth; x++) {
+        for (int y = EDGE_OFFSET; y < GamePanel.mapHeight - EDGE_OFFSET; y++) {
+            for (int x = EDGE_OFFSET; x < GamePanel.mapWidth - EDGE_OFFSET; x++) {
                 int worldX = x * GamePanel.BLOCK_SIZE;
                 int worldY = y * GamePanel.BLOCK_SIZE;
 
