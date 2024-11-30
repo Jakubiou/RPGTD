@@ -5,15 +5,14 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.sun.java.accessibility.util.AWTEventMonitor.addMouseMotionListener;
 
-public class Player {
+public class Player implements Serializable {
     public static int WIDTH = 31;
     private ArrayList<Explosion> explosions = new ArrayList<>();
     private long explosionCooldown = 5000;
@@ -24,9 +23,9 @@ public class Player {
     private int speed = 5;
     private int heal = 0;
     private int coins = 0;
-    private int damage = 1;
+    private int damage = 9;
     private int attackSpeed = 5;
-    private int defense = 0;
+    private int defense = 100;
     private boolean up, down, left, right;
     private Image[] rightTextures, leftTextures, idleTextures, upTextures, downTextures;
     private int currentFrame = 0;
@@ -51,12 +50,15 @@ public class Player {
 
     private int maxHp;
     private static final long MELEE_ATTACK_DURATION = 50;
+    private static final long serialVersionUID = 1L;
+    protected static Soundtrack punchSound;
 
     public Player(int x, int y, int hp) {
         this.x = x;
         this.y = y;
         this.hp = Math.min(hp, 500);
         this.maxHp = Math.min(hp, 500);
+        punchSound = new Soundtrack("res/RPG/Music/493915__damnsatinist__retro-punch.wav");
 
         rightTextures = loadTextures("Player1", "Player2", "Player3", "Player4");
         leftTextures = loadTextures("Player5", "Player6", "Player7", "Player8");
@@ -195,6 +197,9 @@ public class Player {
 
         meleeAttack.setPosition(centerX, centerY, angle);
         meleeAttackStartTime = System.currentTimeMillis();
+        if (punchSound != null) {
+            punchSound.playOnce();
+        }
     }
 
     public long getMeleeAttackStartTime() {
@@ -268,6 +273,11 @@ public class Player {
             moving = true;
         }
 
+        if (x < edgeLimit) x = edgeLimit;
+        if (y < edgeLimit) y = edgeLimit;
+        if (x + WIDTH > PANEL_WIDTH - edgeLimit) x = PANEL_WIDTH - edgeLimit - WIDTH;
+        if (y + HEIGHT > PANEL_HEIGHT - edgeLimit) y = PANEL_HEIGHT - edgeLimit - HEIGHT;
+
         if (moving) {
             long currentTime = System.currentTimeMillis();
             if (currentTime - lastFrameChange >= frameDuration) {
@@ -279,6 +289,7 @@ public class Player {
         }
         updateExplosions();
     }
+
 
     public void keyPressed(KeyEvent e) {
         int key = e.getKeyCode();
@@ -385,9 +396,6 @@ public class Player {
     public void spendCoins(int amount) {
         coins -= amount;
     }
-    public void increaseDamage() {
-        damage += 1;
-    }
     public void increaseAttackSpeed() {
         attackSpeed -= 50;
     }
@@ -401,10 +409,15 @@ public class Player {
     public void increaseDefense() {
         defense += 1;
     }
+    public void increaseDamage() {
+        damage += 1;
+    }
+
     public void increaseHp() {
         hp += 10;
         if (hp > 500) hp = 500;
     }
+
     public int getX() {
         return x;
     }
