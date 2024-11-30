@@ -131,24 +131,26 @@ public class Enemy {
 
     public void moveTowards(int targetX, int targetY) {
         boolean moving = false;
-        boolean wasMovingRight = movingRight;
+        int edgeLimit = 61;
 
         double deltaX = targetX - x;
         double deltaY = targetY - y;
         double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-        if (type == Type.SHOOTING && isInRange(targetX, targetY)) {
-            stopAndShoot(targetX, targetY);
-        } else {
-            if (distance > 0) {
-                double moveX = (deltaX / distance) * speed;
-                double moveY = (deltaY / distance) * speed;
 
-                x += moveX;
-                y += moveY;
-                moving = true;
+        if (distance > 0) {
+            double moveX = (deltaX / distance) * speed;
+            double moveY = (deltaY / distance) * speed;
 
-                movingRight = moveX > 0;
-            }
+            x += moveX;
+            y += moveY;
+            moving = true;
+
+            if (x < edgeLimit) x = edgeLimit;
+            if (y < edgeLimit) y = edgeLimit;
+            if (x + getWidth() > Player.PANEL_WIDTH - edgeLimit) x = Player.PANEL_WIDTH - edgeLimit - getWidth();
+            if (y + getHeight() > Player.PANEL_HEIGHT - edgeLimit) y = Player.PANEL_HEIGHT - edgeLimit - getHeight();
+
+            movingRight = moveX > 0;
 
             if (type == Type.NORMAL && moving) {
                 long currentTime = System.currentTimeMillis();
@@ -164,10 +166,6 @@ public class Enemy {
                 } else if (!moving) {
                     currentFrame = 0;
                 }
-            }
-
-            if (moving && wasMovingRight != movingRight) {
-                currentFrame = 0;
             }
         }
     }
