@@ -11,6 +11,7 @@ public class MenuPanel extends JPanel {
     private JButton quitButton;
     private JButton settingsButton;
     Player player;
+    private Soundtrack backgroundMusic;
 
 
     public MenuPanel(RPGGame game, GamePanel gamePanel) {
@@ -47,6 +48,10 @@ public class MenuPanel extends JPanel {
 
         settingsButton = new JButton("Settings");
         settingsButton.setBounds((menuPanelWidth - 300) / 2, 350, 300, 50);
+        settingsButton.addActionListener(e -> {
+            Settings settings = new Settings(GamePanel.backgroundMusic);
+            settings.setVisible(true);
+        });
         add(settingsButton);
 
         setVisible(false);
