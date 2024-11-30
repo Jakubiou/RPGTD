@@ -39,11 +39,13 @@ public class GamePanel extends JPanel implements ActionListener {
 
     public static int cameraX, cameraY;
     private static int killCount;
-
+    protected static Soundtrack backgroundMusic;
 
     public GamePanel(RPGGame game, Player player) {
         this.game = game;
         this.player = player;
+        backgroundMusic = new Soundtrack("res/RPG/Music/658572__josefpres__8-bit-game-loop-013-simple-mix-1-short-120-bpm.wav");
+        backgroundMusic.playLoop();
         initializeAbilityPanel();
         setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
         setFocusable(true);
@@ -212,11 +214,13 @@ public class GamePanel extends JPanel implements ActionListener {
     private void stopGame() {
         timer.stop();
         isPaused = true;
+        backgroundMusic.stop();
     }
 
     private void startGame() {
         timer.start();
         isPaused = false;
+        backgroundMusic.playLoop();
     }
     private void loadMap(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
@@ -252,7 +256,7 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     private void initGame() {
-        player = new Player(PANEL_WIDTH / 2, PANEL_HEIGHT / 2, 100);
+        player = new Player(mapWidth * BLOCK_SIZE / 2, mapHeight * BLOCK_SIZE / 2, 100);
         enemies = new CopyOnWriteArrayList<>();
         arrows = new CopyOnWriteArrayList<>();
         collisions = new Collisions(player, enemies, arrows);
@@ -351,7 +355,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
         switch (waveNumber) {
             case 1:
-                spawningEnemies.spawnEnemies(0, 0, 0, 10,0);
+                spawningEnemies.spawnEnemies(1000, 0, 0, 0,0);
                 break;
             case 2:
                 spawningEnemies.spawnEnemies(5, 2, 1, 2,1);
@@ -390,7 +394,7 @@ public class GamePanel extends JPanel implements ActionListener {
                 }
             }
 
-            if (killCount > waveNumber * 10 && !gameOver) {
+            if (killCount > waveNumber * 1000 && !gameOver) {
                 stopGame();
                 nextWaveButton.setVisible(true);
                 abilityPanel.setVisible(true);
