@@ -40,7 +40,7 @@ public class Collisions {
                 }
             }
         }
-        if (player.isMeleeAttackActive() && System.currentTimeMillis() - player.getMeleeAttackStartTime() < 200) {
+        if (player.isMeleeAttackActive() && System.currentTimeMillis() - player.getMeleeAttackStartTime() < 50) {
             MeleeAttack meleeAttack = player.getMeleeAttack();
             int meleeX = meleeAttack.getX();
             int meleeY = meleeAttack.getY();
@@ -48,22 +48,16 @@ public class Collisions {
             int meleeAngle = meleeAttack.getAngle();
 
             for (Enemy enemy : enemies) {
-                int dx = enemy.getX() - meleeX;
-                int dy = enemy.getY() - meleeY;
+                int dx = enemy.getX() + enemy.getWidth() / 2 - meleeX;
+                int dy = enemy.getY() + enemy.getWidth() / 2 - meleeY;
                 double distance = Math.sqrt(dx * dx + dy * dy);
-
                 if (distance <= meleeRadius) {
                     double enemyAngle = Math.toDegrees(Math.atan2(dy, dx));
-                    if (enemyAngle < 0) {
-                        enemyAngle += 360;
-                    }
-
+                    enemyAngle = (enemyAngle + 360) % 360;
                     double normalizedAttackAngle = (meleeAngle + 360) % 360;
-
                     double angleDifference = Math.abs(normalizedAttackAngle - enemyAngle);
-                    angleDifference = Math.min(angleDifference, 360 - angleDifference);
-
-                    if (angleDifference <= 45) {
+                    if (angleDifference > 180) angleDifference = 360 - angleDifference;
+                    if (angleDifference <= 90) {
                         enemy.hit(player.getDamage());
                         if (enemy.getHp() <= 0) {
                             enemiesToRemove.add(enemy);
@@ -74,9 +68,7 @@ public class Collisions {
                 }
             }
         }
-
-
-                for (Enemy enemy : enemies) {
+        for (Enemy enemy : enemies) {
             enemy.moveTowards(player.getX(), player.getY());
             Rectangle enemyCollider = enemy.getCollider();
 
