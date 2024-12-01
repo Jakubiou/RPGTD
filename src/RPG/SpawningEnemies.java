@@ -77,6 +77,15 @@ public class SpawningEnemies {
             allEnemiesSpawned = true;
         });
     }
+    public void spawnBoss() {
+        Point spawnPoint = getSpawnPointBehindCamera();
+        if (spawnPoint != null) {
+            Boss boss = new Boss(spawnPoint.x, spawnPoint.y, 500);
+            enemies.add(boss);
+        }
+    }
+
+
 
     public void stopCurrentSpawn() {
         stopSpawning = true;
