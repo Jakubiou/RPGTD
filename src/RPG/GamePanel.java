@@ -353,23 +353,26 @@ public class GamePanel extends JPanel implements ActionListener {
         arrows.clear();
         killCount = 0;
 
-        switch (waveNumber) {
-            case 1:
-                spawningEnemies.spawnEnemies(1000, 0, 0, 0,0);
-                break;
-            case 2:
-                spawningEnemies.spawnEnemies(5, 2, 1, 2,1);
-                break;
-            case 3:
-                spawningEnemies.spawnEnemies(7, 3, 1, 5,2);
-                break;
-            default:
-                spawningEnemies.spawnEnemies(waveNumber * 4, waveNumber * 2, waveNumber * 3, waveNumber * 3,5);
-                break;
-        }
+            spawningEnemies.spawnBoss();
+            switch (waveNumber) {
+                case 1:
+                    spawningEnemies.spawnEnemies(3, 0, 0, 0, 0);
+                    break;
+                case 2:
+                    spawningEnemies.spawnEnemies(5, 2, 1, 2, 1);
+                    break;
+                case 3:
+                    spawningEnemies.spawnEnemies(7, 3, 1, 5, 2);
+                    break;
+                default:
+                    spawningEnemies.spawnEnemies(waveNumber * 4, waveNumber * 2, waveNumber * 3, waveNumber * 3, 5);
+                    break;
+            }
+
 
         startGame();
     }
+
 
     private void startNextWave() {
         nextWaveButton.setVisible(false);
@@ -389,7 +392,10 @@ public class GamePanel extends JPanel implements ActionListener {
             gameOver = collisions.isGameOver();
 
             for (Enemy enemy : enemies) {
-                if (enemy.getType() == Enemy.Type.SHOOTING) {
+                if (enemy instanceof Boss) {
+                    Boss boss = (Boss) enemy;
+                    boss.updateBossBehavior(player, enemies);
+                } else if (enemy.getType() == Enemy.Type.SHOOTING) {
                     enemy.updateProjectiles();
                 }
             }
@@ -431,7 +437,7 @@ public class GamePanel extends JPanel implements ActionListener {
         Iterator<Enemy> enemyIterator = enemies.iterator();
         while (enemyIterator.hasNext()) {
             Enemy enemy = enemyIterator.next();
-            if (enemy.getType() == Enemy.Type.SHOOTING) {
+           if (enemy.getType() == Enemy.Type.SHOOTING) {
                 enemy.drawProjectiles(g);
             }
         }
