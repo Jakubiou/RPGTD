@@ -17,7 +17,7 @@ public class Enemy {
     public static final int SHOOTING_SIZE = 60;
     protected int x;
     protected int y;
-    private double hp;
+    protected double hp;
     protected double speed;
     private boolean isAlive;
     private Type type;
@@ -35,7 +35,7 @@ public class Enemy {
     private Image texture4;
 
     public enum Type {
-        NORMAL, GIANT, SMALL, SHOOTING,SLIME
+        NORMAL, GIANT, SMALL, SHOOTING, SLIME, BOSS
     }
 
     public Enemy(int x, int y, double hp, Type type) {
@@ -130,9 +130,6 @@ public class Enemy {
     }
 
     public void moveTowards(int targetX, int targetY) {
-        boolean moving = false;
-        int edgeLimit = 61;
-
         double deltaX = targetX - x;
         double deltaY = targetY - y;
         double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
@@ -141,34 +138,33 @@ public class Enemy {
             double moveX = (deltaX / distance) * speed;
             double moveY = (deltaY / distance) * speed;
 
-            x += moveX;
-            y += moveY;
-            moving = true;
+            x += Math.round(moveX);
+            y += Math.round(moveY);
 
-            if (x < edgeLimit) x = edgeLimit;
-            if (y < edgeLimit) y = edgeLimit;
-            if (x + getWidth() > Player.PANEL_WIDTH - edgeLimit) x = Player.PANEL_WIDTH - edgeLimit - getWidth();
-            if (y + getHeight() > Player.PANEL_HEIGHT - edgeLimit) y = Player.PANEL_HEIGHT - edgeLimit - getHeight();
+            int edgeLimit = 61;
+            x = Math.max(edgeLimit, Math.min(x, Player.PANEL_WIDTH - edgeLimit - getWidth()));
+            y = Math.max(edgeLimit, Math.min(y, Player.PANEL_HEIGHT - edgeLimit - getHeight()));
 
             movingRight = moveX > 0;
 
-            if (type == Type.NORMAL && moving) {
+            if (type == Type.NORMAL) {
                 long currentTime = System.currentTimeMillis();
                 if (currentTime - lastFrameChange >= frameDuration) {
                     currentFrame = (currentFrame + 1) % knightTexturesRight.length;
                     lastFrameChange = currentTime;
                 }
-            } else if (type == Type.GIANT && moving) {
+            }
+
+            if (type == Type.GIANT) {
                 long currentTime = System.currentTimeMillis();
                 if (currentTime - lastFrameChange >= frameDuration) {
                     currentFrame = (currentFrame + 1) % giantTextures.length;
                     lastFrameChange = currentTime;
-                } else if (!moving) {
-                    currentFrame = 0;
                 }
             }
         }
     }
+
 
     private boolean isInRange(int targetX, int targetY) {
         double distance = Math.sqrt(Math.pow(targetX - x, 2) + Math.pow(targetY - y, 2));
@@ -235,6 +231,8 @@ public class Enemy {
             return 20;
         }else if(type == Type.SLIME){
             return 5;
+        }else if(type == Type.BOSS){
+            return 50;
         }else {
             return 10;
         }
