@@ -8,7 +8,6 @@ import java.awt.event.MouseMotionListener;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.sun.java.accessibility.util.AWTEventMonitor.addMouseMotionListener;
 
@@ -23,22 +22,20 @@ public class Player implements Serializable {
     private int speed = 5;
     private int heal = 0;
     private int coins = 0;
-    private int damage = 9;
+    private int damage = 50;
     private int attackSpeed = 5;
-    private int defense = 100;
+    private int defense = 0;
     private boolean up, down, left, right;
-    private Image[] rightTextures, leftTextures, idleTextures, upTextures, downTextures;
     private int currentFrame = 0;
     private long lastFrameChange = 0;
     private long frameDuration = 100;
-    private Image hpBarFrame1;
-    private Image hpBarFrame2;
-    private Image hpBarFrame3;
+    private transient Image[] rightTextures, leftTextures, idleTextures, upTextures, downTextures;
+    private transient Image hpBarFrame1, hpBarFrame2, hpBarFrame3;
 
     public static final int PANEL_WIDTH = 6120;
     public static final int PANEL_HEIGHT = 3200;
     private boolean dashing = false;
-    private int dashDistance = 4000;
+    private int dashDistance = 1000;
     private int dashSpeed = 20;
     private int dashDirectionX = 0, dashDirectionY = 0;
     private int dashProgress = 0;
@@ -52,6 +49,11 @@ public class Player implements Serializable {
     private static final long MELEE_ATTACK_DURATION = 50;
     private static final long serialVersionUID = 1L;
     protected static Soundtrack punchSound;
+    private boolean isExplosionActive = false;
+    private boolean isDoubleShotActive = false;
+    private boolean isForwardBackwardShotActive = false;
+    private transient MeleeAttack meleeAttack;
+    private boolean isMeleeMode = false;
 
     public Player(int x, int y, int hp) {
         this.x = x;
@@ -59,19 +61,7 @@ public class Player implements Serializable {
         this.hp = Math.min(hp, 500);
         this.maxHp = Math.min(hp, 500);
         punchSound = new Soundtrack("res/RPG/Music/493915__damnsatinist__retro-punch.wav");
-
-        rightTextures = loadTextures("Player1", "Player2", "Player3", "Player4");
-        leftTextures = loadTextures("Player5", "Player6", "Player7", "Player8");
-        upTextures = loadTextures("Player9", "Player10", "Player11", "Player12");
-        downTextures = loadTextures("Player13", "Player14", "Player15", "Player16");
-        idleTextures = loadTextures("Player17","Player18","Player19","Player20");
-        try {
-            hpBarFrame1 = ImageIO.read(new File("res/rpg/background/HPBar1.png"));
-            hpBarFrame2 = ImageIO.read(new File("res/rpg/background/HPBar2.png"));
-            hpBarFrame3 = ImageIO.read(new File("res/rpg/background/HPBar3.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        initializeTransientFields();
         addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseMoved(MouseEvent e) {
@@ -86,7 +76,21 @@ public class Player implements Serializable {
             }
         });
     }
-
+    private void initializeTransientFields() {
+        rightTextures = loadTextures("Player1", "Player2", "Player3", "Player4");
+        leftTextures = loadTextures("Player5", "Player6", "Player7", "Player8");
+        upTextures = loadTextures("Player9", "Player10", "Player11", "Player12");
+        downTextures = loadTextures("Player13", "Player14", "Player15", "Player16");
+        idleTextures = loadTextures("Player17", "Player18", "Player19", "Player20");
+        try {
+            hpBarFrame1 = ImageIO.read(new File("res/rpg/background/HPBar1.png"));
+            hpBarFrame2 = ImageIO.read(new File("res/rpg/background/HPBar2.png"));
+            hpBarFrame3 = ImageIO.read(new File("res/rpg/background/HPBar3.png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        meleeAttack = new MeleeAttack(0, 0, 0);
+    }
 
     private Image[] loadTextures(String... filenames) {
         Image[] textures = new Image[filenames.length];
@@ -129,9 +133,10 @@ public class Player implements Serializable {
         int hpBarX = GamePanel.PANEL_WIDTH - hpBarWidth - 10 + GamePanel.cameraX;
         int hpBarY = 29 + GamePanel.cameraY;
 
-
-        g.setColor(Color.BLACK);
-        g.drawRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+        if (hp > 0) {
+            g.setColor(Color.BLACK);
+            g.drawRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+        }
 
         if (hp > 0) {
             int redWidth = Math.min(hp, 100) * hpBarWidth / 100;
@@ -160,18 +165,17 @@ public class Player implements Serializable {
             }
         }
 
-        g.setColor(Color.BLACK);
-        for (int i = 1; i <= 9; i++) {
-            int dividerX = hpBarX + (i * hpBarWidth / 10);
-            g.drawLine(dividerX, hpBarY - 3, dividerX, hpBarY + hpBarHeight);
+        if (hp > 0) {
+            g.setColor(Color.BLACK);
+            for (int i = 1; i <= 9; i++) {
+                int dividerX = hpBarX + (i * hpBarWidth / 10);
+                g.drawLine(dividerX, hpBarY - 3, dividerX, hpBarY + hpBarHeight);
+            }
         }
         if (isMeleeMode && System.currentTimeMillis() - meleeAttackStartTime < MELEE_ATTACK_DURATION) {
             meleeAttack.draw((Graphics2D) g);
         }
     }
-
-    private boolean isMeleeMode = false;
-    private MeleeAttack meleeAttack = new MeleeAttack(0, 0, 0);
 
     public void toggleMeleeMode() {
         isMeleeMode = !isMeleeMode;
@@ -314,7 +318,7 @@ public class Player implements Serializable {
         if (key == KeyEvent.VK_A || key == KeyEvent.VK_LEFT) { left = false; }
         if (key == KeyEvent.VK_D || key == KeyEvent.VK_RIGHT) { right = false; }
     }
-    private boolean canUseExplosion() {
+    protected boolean canUseExplosion() {
         return System.currentTimeMillis() - lastExplosionTime >= explosionCooldown;
     }
 
@@ -364,6 +368,34 @@ public class Player implements Serializable {
             dashDirectionY = 1;
         }
     }
+    public void saveState(String filePath) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+            oos.writeObject(this);
+            System.out.println("Player state saved successfully: x=" + x + ", y=" + y +
+                    ", hp=" + hp + ", coins=" + coins + ", damage=" + damage);
+        } catch (IOException e) {
+            System.err.println("Error saving player state: " + e.getMessage());
+        }
+    }
+
+
+
+    public static Player loadState(String filePath) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filePath))) {
+            Player player = (Player) ois.readObject();
+            player.initializeTransientFields();
+            System.out.println("Player state loaded successfully: x=" + player.getX() +
+                    ", y=" + player.getY() + ", hp=" + player.getHp() + ", coins=" + player.getCoins());
+            return player;
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error loading player state: " + e.getMessage());
+            return null;
+        }
+    }
+
+
+
+
 
     public Rectangle getCollider() {
         return new Rectangle(x, y, 45, 45);
@@ -439,4 +471,33 @@ public class Player implements Serializable {
     public int getHeal() {
         return heal;
     }
+    public void setDoubleShotActive(boolean active) {
+        isDoubleShotActive = active;
+    }
+
+    public void setForwardBackwardShotActive(boolean active) {
+        isForwardBackwardShotActive = active;
+    }
+    public boolean isDoubleShotActive() {
+        return isDoubleShotActive;
+    }
+    public boolean isExplosionActive() {
+        return isExplosionActive;
+    }
+
+    public boolean isForwardBackwardShotActive() {
+        return isForwardBackwardShotActive;
+    }
+
+    public void setHp(int hp) {
+        this.hp = hp;
+    }
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
 }
