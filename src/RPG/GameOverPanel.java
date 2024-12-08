@@ -27,13 +27,15 @@ public class GameOverPanel extends JPanel {
         gameOverLabel.setForeground(Color.WHITE);
 
         JButton restartButton = createButton("Play again");
-        restartButton.addActionListener(e -> gamePanel.restartGame());
+        restartButton.addActionListener(e ->{
+            gamePanel.restartGame();
+        });
 
         JButton upgradeButton = createButton("Upgrade");
         upgradeButton.addActionListener(e -> {
-            //gamePanel.showUpgradePanel();
-            setVisible(false);
+            this.setVisible(true);
         });
+
 
         JButton levelsButton = createButton("Levels");
         //levelsButton.addActionListener(e -> game.showLevelSelectPanel());
