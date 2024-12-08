@@ -10,7 +10,6 @@ public class MenuPanel extends JPanel {
     private JButton mainMenuButton;
     private JButton quitButton;
     private JButton settingsButton;
-    Player player;
     private Soundtrack backgroundMusic;
 
 
