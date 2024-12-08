@@ -110,14 +110,14 @@ public class GamePanel extends JPanel implements ActionListener {
 
     private void initializeAbilityPanel() {
         abilityPanel = new JPanel();
-        abilityPanel.setLayout(new GridLayout(4, 1));
+        abilityPanel.setLayout(new GridLayout(6, 1));
 
         int panelWidth = 400;
         int panelHeight = 300;
         abilityPanel.setBounds((PANEL_WIDTH - panelWidth) / 2, (PANEL_HEIGHT - panelHeight) / 2, panelWidth, panelHeight);
 
         abilityPanel.setBackground(Color.DARK_GRAY);
-        abilityPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
+        abilityPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 5));
 
         JLabel coinsLabel = new JLabel("Coins: " + player.getCoins(), JLabel.CENTER);
         coinsLabel.setForeground(Color.WHITE);
@@ -127,14 +127,21 @@ public class GamePanel extends JPanel implements ActionListener {
         JButton damageButton = createUpgradeButton("Damage");
         JButton hpButton = createUpgradeButton("HP");
         JButton defenseButton = createUpgradeButton("Defense");
+        JButton doubleShotButton = createUpgradeButton("Double Shot");
+        JButton forwardBackwardShotButton = createUpgradeButton("Backward Shot");
 
         damageButton.addActionListener(e -> upgradeStat("damage", 10));
         hpButton.addActionListener(e -> upgradeStat("HP", 10));
         defenseButton.addActionListener(e -> upgradeStat("defense", 10));
+        doubleShotButton.addActionListener(e -> upgradeStat("double shot", 10));
+        forwardBackwardShotButton.addActionListener(e -> upgradeStat("backward shot", 10));
+
 
         abilityPanel.add(damageButton);
         abilityPanel.add(hpButton);
         abilityPanel.add(defenseButton);
+        abilityPanel.add(doubleShotButton);
+        abilityPanel.add(forwardBackwardShotButton);
 
         add(abilityPanel);
         abilityPanel.setVisible(false);
@@ -190,21 +197,34 @@ public class GamePanel extends JPanel implements ActionListener {
     private void upgradeStat(String stat, int cost) {
         if (player.getCoins() >= cost) {
             player.setCoins(player.getCoins() - cost);
-            switch (stat) {
+            switch (stat.toLowerCase()) {
                 case "damage":
                     player.increaseDamage();
                     break;
-                case "HP":
+                case "hp":
                     player.increaseHp();
                     break;
                 case "defense":
                     player.increaseDefense();
                     break;
+                case "double shot":
+                    player.setDoubleShotActive(true);
+                    break;
+                case "backward shot":
+                    player.setForwardBackwardShotActive(true);
+                    break;
+                default:
+                    System.err.println("Unknown stat: " + stat);
             }
+            player.saveState("player_save.dat");
             updateUpgradePanel();
             this.requestFocusInWindow();
+        } else {
+            System.out.println("Not enough coins!");
         }
     }
+
+
 
     private void updateUpgradePanel() {
         ((JLabel)abilityPanel.getComponent(0)).setText("Coins: " + player.getCoins());
@@ -256,7 +276,18 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     private void initGame() {
-        player = new Player(mapWidth * BLOCK_SIZE / 2, mapHeight * BLOCK_SIZE / 2, 100);
+        String saveFilePath = "player_save.dat";
+
+        if (player == null) {
+            player = new Player(mapWidth * BLOCK_SIZE / 2, mapHeight * BLOCK_SIZE / 2, 100);
+        } else {
+            player = Player.loadState(saveFilePath);
+            player.setX(mapWidth * BLOCK_SIZE / 2);
+            player.setY(mapHeight * BLOCK_SIZE / 2);
+        }
+        System.out.println("Player initialized: x=" + player.getX() + ", y=" + player.getY() +
+                ", hp=" + player.getHp() + ", coins=" + player.getCoins());
+
         enemies = new CopyOnWriteArrayList<>();
         arrows = new CopyOnWriteArrayList<>();
         collisions = new Collisions(player, enemies, arrows);
@@ -324,12 +355,30 @@ public class GamePanel extends JPanel implements ActionListener {
 
                     if (player.isMeleeMode()) {
                         player.performMeleeAttack(mouseX, mouseY);
+                    } else if (player.isExplosionActive() && player.canUseExplosion()) {
+                        player.triggerExplosion();
                     } else {
-                        arrows.add(new Arrow(player.getX() + Player.WIDTH / 2, player.getY() + Player.HEIGHT / 2, mouseX, mouseY));
+                        int centerX = player.getX() + Player.WIDTH / 2;
+                        int centerY = player.getY() + Player.HEIGHT / 2;
+
+                        if (player.isDoubleShotActive() && player.isForwardBackwardShotActive()) {
+                            arrows.add(new Arrow(centerX, centerY, mouseX + 20, mouseY));
+                            arrows.add(new Arrow(centerX, centerY, mouseX - 20, mouseY));
+                            arrows.add(new Arrow(centerX, centerY, centerX - (mouseX - centerX), centerY - (mouseY - centerY)));
+                        } else if (player.isDoubleShotActive()) {
+                            arrows.add(new Arrow(centerX, centerY, mouseX + 20, mouseY));
+                            arrows.add(new Arrow(centerX, centerY, mouseX - 20, mouseY));
+                        } else if (player.isForwardBackwardShotActive()) {
+                            arrows.add(new Arrow(centerX, centerY, mouseX, mouseY));
+                            arrows.add(new Arrow(centerX, centerY, centerX - (mouseX - centerX), centerY - (mouseY - centerY)));
+                        } else {
+                            arrows.add(new Arrow(centerX, centerY, mouseX, mouseY));
+                        }
                     }
                 }
             }
         });
+
 
 
 
@@ -353,10 +402,10 @@ public class GamePanel extends JPanel implements ActionListener {
         arrows.clear();
         killCount = 0;
 
-            spawningEnemies.spawnBoss();
+        spawningEnemies.spawnBoss();
             switch (waveNumber) {
                 case 1:
-                    spawningEnemies.spawnEnemies(3, 0, 0, 0, 0);
+                    spawningEnemies.spawnEnemies(100, 100, 100, 100, 100);
                     break;
                 case 2:
                     spawningEnemies.spawnEnemies(5, 2, 1, 2, 1);
@@ -388,7 +437,7 @@ public class GamePanel extends JPanel implements ActionListener {
             }
             player.move();
 
-            collisions.checkCollisions(killCount);
+            collisions.checkCollisions();
             gameOver = collisions.isGameOver();
 
             for (Enemy enemy : enemies) {
@@ -400,7 +449,7 @@ public class GamePanel extends JPanel implements ActionListener {
                 }
             }
 
-            if (killCount > waveNumber * 1000 && !gameOver) {
+            if (killCount > waveNumber * 10 && !gameOver) {
                 stopGame();
                 nextWaveButton.setVisible(true);
                 abilityPanel.setVisible(true);
@@ -416,6 +465,9 @@ public class GamePanel extends JPanel implements ActionListener {
     }
     public static void killCountPlus(){
         killCount++;
+    }
+    public void savePlayerStatus(){
+        player.saveState("player_save.dat");
     }
 
     @Override
