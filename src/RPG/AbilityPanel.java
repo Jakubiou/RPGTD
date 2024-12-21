@@ -1,35 +1,53 @@
 package RPG;
 
-import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
+import javax.swing.*;
 
 public class AbilityPanel extends JPanel {
-    private Player player;
-    private JLabel coinsLabel;
-    private JButton damageButton, hpButton, defenseButton;
+    private final Player player;
+    private final GamePanel gamePanel;
 
-    public AbilityPanel(Player player) {
+    public AbilityPanel(GamePanel gamePanel,Player player) {
+        this.gamePanel = gamePanel;
         this.player = player;
-        initializePanel();
+        initializeAbilityPanel();
     }
 
-    private void initializePanel() {
-        setLayout(new GridLayout(4, 1));
-        setBackground(Color.DARK_GRAY);
-        setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
+    private void initializeAbilityPanel() {
+        setLayout(new GridLayout(6, 1));
 
-        coinsLabel = new JLabel("Coins: " + player.getCoins(), JLabel.CENTER);
+        int panelWidth = 400;
+        int panelHeight = 300;
+        setBounds((GamePanel.PANEL_WIDTH - panelWidth) / 2, (GamePanel.PANEL_HEIGHT - panelHeight) / 2, panelWidth, panelHeight);
+
+        setBackground(Color.DARK_GRAY);
+        setBorder(BorderFactory.createLineBorder(Color.BLACK, 5));
+
+        JLabel coinsLabel = new JLabel("Coins: " + player.getCoins(), JLabel.CENTER);
         coinsLabel.setForeground(Color.WHITE);
         coinsLabel.setFont(new Font("Arial", Font.BOLD, 24));
         add(coinsLabel);
 
-        damageButton = createUpgradeButton("Damage");
-        hpButton = createUpgradeButton("HP");
-        defenseButton = createUpgradeButton("Defense");
+        JButton damageButton = createUpgradeButton("Damage");
+        JButton hpButton = createUpgradeButton("HP");
+        JButton defenseButton = createUpgradeButton("Defense");
+        JButton doubleShotButton = createUpgradeButton("Double Shot");
+        JButton forwardBackwardShotButton = createUpgradeButton("Backward Shot");
+
+        damageButton.addActionListener(e -> upgradeStat("damage", 10));
+        hpButton.addActionListener(e -> upgradeStat("HP", 10));
+        defenseButton.addActionListener(e -> upgradeStat("defense", 10));
+        doubleShotButton.addActionListener(e -> upgradeStat("double shot", 10));
+        forwardBackwardShotButton.addActionListener(e -> upgradeStat("backward shot", 10));
 
         add(damageButton);
         add(hpButton);
         add(defenseButton);
+        add(doubleShotButton);
+        add(forwardBackwardShotButton);
+
+        setVisible(false);
     }
 
     private JButton createUpgradeButton(String statName) {
@@ -39,7 +57,7 @@ public class AbilityPanel extends JPanel {
                 super.paintComponent(g);
                 g.setColor(Color.WHITE);
                 g.setFont(new Font("Arial", Font.BOLD, 20));
-                String text = String.format("%s +%nCurrent: %d", statName, getCurrentStatValue(statName));
+                String text = String.format("%s +\nCurrent: %d", statName, getCurrentStatValue(statName));
                 drawCenteredString(g, text, getWidth(), getHeight());
             }
         };
@@ -49,7 +67,7 @@ public class AbilityPanel extends JPanel {
 
     private void drawCenteredString(Graphics g, String text, int width, int height) {
         FontMetrics metrics = g.getFontMetrics();
-        String[] lines = text.split("\n");
+        String[] lines = text.split("\\n");
         int y = (height - metrics.getHeight() * lines.length) / 2 + metrics.getAscent();
         for (String line : lines) {
             int x = (width - metrics.stringWidth(line)) / 2;
@@ -79,7 +97,45 @@ public class AbilityPanel extends JPanel {
         button.setFocusPainted(false);
     }
 
-    public void updateCoins() {
-        coinsLabel.setText("Coins: " + player.getCoins());
+    private void upgradeStat(String stat, int cost) {
+        if (player.getCoins() >= cost) {
+            player.setCoins(player.getCoins() - cost);
+            switch (stat.toLowerCase()) {
+                case "damage":
+                    player.increaseDamage();
+                    break;
+                case "hp":
+                    player.increaseHp();
+                    break;
+                case "defense":
+                    player.increaseDefense();
+                    break;
+                case "double shot":
+                    player.setDoubleShotActive(true);
+                    break;
+                case "backward shot":
+                    player.setForwardBackwardShotActive(true);
+                    break;
+                default:
+                    System.err.println("Unknown stat: " + stat);
+            }
+            player.saveState("player_save.dat");
+            updateAbilityPanel();
+        } else {
+            System.out.println("Not enough coins!");
+        }
+    }
+
+    public void updateAbilityPanel() {
+        ((JLabel) getComponent(0)).setText("Coins: " + player.getCoins());
+        repaint();
+    }
+    public void showPanel() {
+        setVisible(true);
+        updateAbilityPanel();
+    }
+
+    public void hidePanel() {
+        setVisible(false);
     }
 }
