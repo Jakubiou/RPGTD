@@ -14,7 +14,7 @@ public class GamePanel extends JPanel implements ActionListener {
     public static final int PANEL_WIDTH = 1530;
     public static final int PANEL_HEIGHT = 800;
     private JButton nextWaveButton;
-    private JPanel abilityPanel;
+    private AbilityPanel abilityPanel;
     private boolean abilityPanelVisible;
     public static int[][] map;
     public static int mapWidth, mapHeight;
@@ -46,7 +46,7 @@ public class GamePanel extends JPanel implements ActionListener {
         this.player = player;
         backgroundMusic = new Soundtrack("res/RPG/Music/658572__josefpres__8-bit-game-loop-013-simple-mix-1-short-120-bpm.wav");
         backgroundMusic.playLoop();
-        initializeAbilityPanel();
+
         setPreferredSize(new Dimension(PANEL_WIDTH, PANEL_HEIGHT));
         setFocusable(true);
         setLayout(null);
@@ -54,6 +54,7 @@ public class GamePanel extends JPanel implements ActionListener {
         loadBlockImages();
         loadMap("map1.txt");
         initGame();
+        initializeAbilityPanel();
     }
 
     private void initializeMenu() {
@@ -107,128 +108,9 @@ public class GamePanel extends JPanel implements ActionListener {
             e.printStackTrace();
         }
     }
-
     private void initializeAbilityPanel() {
-        abilityPanel = new JPanel();
-        abilityPanel.setLayout(new GridLayout(6, 1));
-
-        int panelWidth = 400;
-        int panelHeight = 300;
-        abilityPanel.setBounds((PANEL_WIDTH - panelWidth) / 2, (PANEL_HEIGHT - panelHeight) / 2, panelWidth, panelHeight);
-
-        abilityPanel.setBackground(Color.DARK_GRAY);
-        abilityPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 5));
-
-        JLabel coinsLabel = new JLabel("Coins: " + player.getCoins(), JLabel.CENTER);
-        coinsLabel.setForeground(Color.WHITE);
-        coinsLabel.setFont(new Font("Arial", Font.BOLD, 24));
-        abilityPanel.add(coinsLabel);
-
-        JButton damageButton = createUpgradeButton("Damage");
-        JButton hpButton = createUpgradeButton("HP");
-        JButton defenseButton = createUpgradeButton("Defense");
-        JButton doubleShotButton = createUpgradeButton("Double Shot");
-        JButton forwardBackwardShotButton = createUpgradeButton("Backward Shot");
-
-        damageButton.addActionListener(e -> upgradeStat("damage", 10));
-        hpButton.addActionListener(e -> upgradeStat("HP", 10));
-        defenseButton.addActionListener(e -> upgradeStat("defense", 10));
-        doubleShotButton.addActionListener(e -> upgradeStat("double shot", 10));
-        forwardBackwardShotButton.addActionListener(e -> upgradeStat("backward shot", 10));
-
-
-        abilityPanel.add(damageButton);
-        abilityPanel.add(hpButton);
-        abilityPanel.add(defenseButton);
-        abilityPanel.add(doubleShotButton);
-        abilityPanel.add(forwardBackwardShotButton);
-
+        abilityPanel = new AbilityPanel(this, player);
         add(abilityPanel);
-        abilityPanel.setVisible(false);
-    }
-
-    private JButton createUpgradeButton(String statName) {
-        JButton button = new JButton() {
-            @Override
-            public void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                g.setColor(Color.WHITE);
-                g.setFont(new Font("Arial", Font.BOLD, 20));
-                String text = String.format("%s +%nCurrent: %d", statName, getCurrentStatValue(statName));
-                drawCenteredString(g, text, getWidth(), getHeight());
-            }
-        };
-        styleAbylityButton(button);
-        return button;
-    }
-
-    private void drawCenteredString(Graphics g, String text, int width, int height) {
-        FontMetrics metrics = g.getFontMetrics();
-        String[] lines = text.split("\n");
-        int y = (height - metrics.getHeight() * lines.length) / 2 + metrics.getAscent();
-        for (String line : lines) {
-            int x = (width - metrics.stringWidth(line)) / 2;
-            g.drawString(line, x, y);
-            y += metrics.getHeight();
-        }
-    }
-
-    private int getCurrentStatValue(String statName) {
-        switch (statName) {
-            case "Damage":
-                return player.getDamage();
-            case "HP":
-                return player.getHp();
-            case "Defense":
-                return player.getDefense();
-            default:
-                return 0;
-        }
-    }
-
-    private void styleAbylityButton(JButton button) {
-        button.setFont(new Font("Arial", Font.BOLD, 20));
-        button.setBackground(Color.GRAY);
-        button.setForeground(Color.WHITE);
-        button.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-        button.setFocusPainted(false);
-    }
-
-    private void upgradeStat(String stat, int cost) {
-        if (player.getCoins() >= cost) {
-            player.setCoins(player.getCoins() - cost);
-            switch (stat.toLowerCase()) {
-                case "damage":
-                    player.increaseDamage();
-                    break;
-                case "hp":
-                    player.increaseHp();
-                    break;
-                case "defense":
-                    player.increaseDefense();
-                    break;
-                case "double shot":
-                    player.setDoubleShotActive(true);
-                    break;
-                case "backward shot":
-                    player.setForwardBackwardShotActive(true);
-                    break;
-                default:
-                    System.err.println("Unknown stat: " + stat);
-            }
-            player.saveState("player_save.dat");
-            updateUpgradePanel();
-            this.requestFocusInWindow();
-        } else {
-            System.out.println("Not enough coins!");
-        }
-    }
-
-
-
-    private void updateUpgradePanel() {
-        ((JLabel)abilityPanel.getComponent(0)).setText("Coins: " + player.getCoins());
-        abilityPanel.repaint();
     }
 
     private void stopGame() {
@@ -390,8 +272,6 @@ public class GamePanel extends JPanel implements ActionListener {
             e.printStackTrace();
         }
         nextWave();
-        abilityPanel.setVisible(false);
-
         timer.start();
     }
 
@@ -405,7 +285,7 @@ public class GamePanel extends JPanel implements ActionListener {
         spawningEnemies.spawnBoss();
             switch (waveNumber) {
                 case 1:
-                    spawningEnemies.spawnEnemies(100, 100, 100, 100, 100);
+                    spawningEnemies.spawnEnemies(0, 0, 10, 0, 0);
                     break;
                 case 2:
                     spawningEnemies.spawnEnemies(5, 2, 1, 2, 1);
@@ -425,7 +305,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
     private void startNextWave() {
         nextWaveButton.setVisible(false);
-        abilityPanel.setVisible(false);
+        abilityPanel.hidePanel();
         nextWave();
     }
 
@@ -433,7 +313,7 @@ public class GamePanel extends JPanel implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         if (!gameOver && !isPaused) {
             if (abilityPanel.isVisible()) {
-                updateUpgradePanel();
+                abilityPanel.updateAbilityPanel();
             }
             player.move();
 
@@ -452,7 +332,7 @@ public class GamePanel extends JPanel implements ActionListener {
             if (killCount > waveNumber * 10 && !gameOver) {
                 stopGame();
                 nextWaveButton.setVisible(true);
-                abilityPanel.setVisible(true);
+                abilityPanel.showPanel();
             }
 
             if (player.getHp() <= 0) {
