@@ -33,7 +33,8 @@ public class GameOverPanel extends JPanel {
 
         JButton upgradeButton = createButton("Upgrade");
         upgradeButton.addActionListener(e -> {
-            this.setVisible(true);
+            this.setVisible(false);
+            gamePanel.initializeUpgradePanel();
         });
 
 
