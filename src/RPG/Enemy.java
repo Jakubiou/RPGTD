@@ -13,7 +13,7 @@ public class Enemy {
     private long lastShootTime = 0;
     public static final int NORMAL_SIZE = 37;
     public static final int GIANT_SIZE = 64;
-    public static final int SMALL_SIZE = 22;
+    public static final int SMALL_SIZE = 32;
     public static final int SHOOTING_SIZE = 60;
     protected int x;
     protected int y;
@@ -133,6 +133,11 @@ public class Enemy {
         double deltaX = targetX - x;
         double deltaY = targetY - y;
         double distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+        if (type == Type.SHOOTING && isInRange(targetX, targetY)) {
+            stopAndShoot(targetX, targetY);
+            return;
+        }
 
         if (distance > 0) {
             double moveX = (deltaX / distance) * speed;

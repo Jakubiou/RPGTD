@@ -12,7 +12,7 @@ import java.util.Iterator;
 import static com.sun.java.accessibility.util.AWTEventMonitor.addMouseMotionListener;
 
 public class Player implements Serializable {
-    public static int WIDTH = 31;
+    protected static int WIDTH = 31;
     private ArrayList<Explosion> explosions = new ArrayList<>();
     private long explosionCooldown = 5000;
     private long lastExplosionTime = 0;
@@ -393,9 +393,22 @@ public class Player implements Serializable {
         }
     }
 
-
-
-
+    public void saveCoins(String filePath) {
+        try {
+            Player existingPlayer = loadState(filePath);
+            if (existingPlayer != null) {
+                existingPlayer.setCoins(this.coins);
+                try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+                    oos.writeObject(existingPlayer);
+                    System.out.println("Coins saved successfully into player file: " + coins);
+                }
+            } else {
+                System.err.println("No existing player found to save coins.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error saving coins to player file: " + e.getMessage());
+        }
+    }
 
     public Rectangle getCollider() {
         return new Rectangle(x, y, 45, 45);

@@ -15,7 +15,7 @@ public class AbilityPanel extends JPanel {
     }
 
     private void initializeAbilityPanel() {
-        setLayout(new GridLayout(6, 1));
+        setLayout(new GridLayout(3, 1));
 
         int panelWidth = 400;
         int panelHeight = 300;
@@ -29,21 +29,12 @@ public class AbilityPanel extends JPanel {
         coinsLabel.setFont(new Font("Arial", Font.BOLD, 24));
         add(coinsLabel);
 
-        JButton damageButton = createUpgradeButton("Damage");
-        JButton hpButton = createUpgradeButton("HP");
-        JButton defenseButton = createUpgradeButton("Defense");
         JButton doubleShotButton = createUpgradeButton("Double Shot");
         JButton forwardBackwardShotButton = createUpgradeButton("Backward Shot");
 
-        damageButton.addActionListener(e -> upgradeStat("damage", 10));
-        hpButton.addActionListener(e -> upgradeStat("HP", 10));
-        defenseButton.addActionListener(e -> upgradeStat("defense", 10));
         doubleShotButton.addActionListener(e -> upgradeStat("double shot", 10));
         forwardBackwardShotButton.addActionListener(e -> upgradeStat("backward shot", 10));
 
-        add(damageButton);
-        add(hpButton);
-        add(defenseButton);
         add(doubleShotButton);
         add(forwardBackwardShotButton);
 
@@ -57,7 +48,7 @@ public class AbilityPanel extends JPanel {
                 super.paintComponent(g);
                 g.setColor(Color.WHITE);
                 g.setFont(new Font("Arial", Font.BOLD, 20));
-                String text = String.format("%s +\nCurrent: %d", statName, getCurrentStatValue(statName));
+                String text = String.format(statName);
                 drawCenteredString(g, text, getWidth(), getHeight());
             }
         };
@@ -76,18 +67,6 @@ public class AbilityPanel extends JPanel {
         }
     }
 
-    private int getCurrentStatValue(String statName) {
-        switch (statName) {
-            case "Damage":
-                return player.getDamage();
-            case "HP":
-                return player.getHp();
-            case "Defense":
-                return player.getDefense();
-            default:
-                return 0;
-        }
-    }
 
     private void styleAbilityButton(JButton button) {
         button.setFont(new Font("Arial", Font.BOLD, 20));
@@ -101,15 +80,6 @@ public class AbilityPanel extends JPanel {
         if (player.getCoins() >= cost) {
             player.setCoins(player.getCoins() - cost);
             switch (stat.toLowerCase()) {
-                case "damage":
-                    player.increaseDamage();
-                    break;
-                case "hp":
-                    player.increaseHp();
-                    break;
-                case "defense":
-                    player.increaseDefense();
-                    break;
                 case "double shot":
                     player.setDoubleShotActive(true);
                     break;
@@ -119,7 +89,6 @@ public class AbilityPanel extends JPanel {
                 default:
                     System.err.println("Unknown stat: " + stat);
             }
-            player.saveState("player_save.dat");
             updateAbilityPanel();
         } else {
             System.out.println("Not enough coins!");

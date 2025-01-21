@@ -37,6 +37,7 @@ public class MenuPanel extends JPanel {
         mainMenuButton.addActionListener(e -> {
             game.dispose();
             new MainMenuPanel();
+            gamePanel.savePlayerCoins();
         });
         add(mainMenuButton);
 

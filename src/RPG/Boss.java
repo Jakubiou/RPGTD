@@ -7,9 +7,9 @@ import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Boss extends Enemy {
-    private static final int BOSS_SIZE = 50;
+    private static final int BOSS_SIZE = 128;
     private long lastSpecialAttackTime = 0;
-    private static final long SPECIAL_ATTACK_INTERVAL = 3000;
+    private static final long SPECIAL_ATTACK_INTERVAL = 2000;
     private long dashStartTime = 0;
     private boolean isPreparingForDash = false;
     protected boolean isDashing = false;
@@ -18,15 +18,42 @@ public class Boss extends Enemy {
     protected boolean isAreaAttacking = false;
     private long areaAttackStartTime = 0;
     private static final int DASH_DURATION = 1000;
-    private static final long DASH_PREPARE_TIME = 1000;
+    private static final long DASH_PREPARE_TIME = 500;
     private static final int AREA_ATTACK_DURATION = 500;
-    private Image texture3;
+    private Image[] bossTexturesLeft;
+    private Image[] bossTexturesRight;
+    private int currentFrame = 0;
+    private long lastFrameChange = 0;
+    private long frameDuration = 100;
+    private boolean movingRight = true;
+    private static final long AREA_ATTACK_DELAY = 500;
+    private boolean isPreparingAreaAttack = false;
+    private long areaAttackPrepareTime = 0;
+    private Image[] bossAreaAttackTextures;
+    private Image[] deathTextures;
+    protected boolean isDying = false;
+    private boolean isDead = false;
+    private long deathStartTime = 0;
+    private int deathFrame = 0;
+    private static final long DEATH_FRAME_DURATION = 100;
 
     public Boss(int x, int y, int hp) {
         super(x, y, hp, Type.BOSS);
         this.speed = 1;
+
+        bossTexturesLeft = new Image[5];
+        bossTexturesRight = new Image[5];
+        bossAreaAttackTextures = new Image[5];
+        deathTextures = new Image[10];
         try {
-            texture3 = ImageIO.read(new File("res/rpg/enemy/Enemy_small.png"));
+            for (int i = 0; i < 5; i++) {
+                bossTexturesLeft[i] = ImageIO.read(new File("res/rpg/enemy/Enemy_boss" + (i + 1) + ".png"));
+                bossTexturesRight[i] = ImageIO.read(new File("res/rpg/enemy/Enemy_boss" + (i + 6) + ".png"));
+                bossAreaAttackTextures[i] = ImageIO.read(new File("res/rpg/enemy/Enemy_boss" + (i + 6) + ".png"));
+            }
+            for (int i = 0; i < 10; i++) {
+                deathTextures[i] = ImageIO.read(new File("res/rpg/enemy/Enemy_boss" + (i + 11) + ".png"));
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -34,10 +61,26 @@ public class Boss extends Enemy {
 
     @Override
     public void draw(Graphics g) {
-        g.drawImage(texture3, x, y, BOSS_SIZE, BOSS_SIZE, null);
-
+        if (isDying) {
+            long currentTime = System.currentTimeMillis();
+            if (currentTime - deathStartTime >= DEATH_FRAME_DURATION) {
+                deathFrame++;
+                deathStartTime = currentTime;
+            }
+            if (deathFrame < deathTextures.length) {
+                g.drawImage(deathTextures[deathFrame], x, y, BOSS_SIZE, BOSS_SIZE, null);
+            } else {
+                isDead = true;
+            }
+        } else if (isPreparingAreaAttack) {
+            int animFrame = (int) ((System.currentTimeMillis() - areaAttackPrepareTime) / frameDuration) % bossAreaAttackTextures.length;
+            g.drawImage(bossAreaAttackTextures[animFrame], x, y, BOSS_SIZE, BOSS_SIZE, null);
+        } else {
+            Image[] textures = movingRight ? bossTexturesRight : bossTexturesLeft;
+            g.drawImage(textures[currentFrame], x, y, BOSS_SIZE, BOSS_SIZE, null);
+        }
         if (isAreaAttacking) {
-            g.setColor(new Color(255, 0, 0, 100));
+            g.setColor(new Color(86, 0, 110, 100));
             int attackRadius = 400;
             g.fillOval(x - attackRadius / 2 + BOSS_SIZE / 2,
                     y - attackRadius / 2 + BOSS_SIZE / 2,
@@ -74,8 +117,6 @@ public class Boss extends Enemy {
         }
     }
 
-
-
     public void dashAttack(int playerX, int playerY) {
         long currentTime = System.currentTimeMillis();
 
@@ -100,22 +141,28 @@ public class Boss extends Enemy {
 
     @Override
     public void moveTowards(int playerX, int playerY) {
-        if (!isPreparingForDash && !isDashing) {
-            super.moveTowards(playerX, playerY);
+        double deltaX = playerX - x;
+        movingRight = deltaX > 0;
+
+        super.moveTowards(playerX, playerY);
+
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastFrameChange >= frameDuration) {
+            currentFrame = (currentFrame + 1) % bossTexturesLeft.length;
+            lastFrameChange = currentTime;
         }
     }
 
-
     public void summonMinions(CopyOnWriteArrayList<Enemy> enemies) {
         int radius = 150;
-        int minionCount = 8;
+        int minionCount = 0;
 
         for (int i = 0; i < minionCount; i++) {
             double angle = 2 * Math.PI / minionCount * i;
             int offsetX = (int) (Math.cos(angle) * radius);
             int offsetY = (int) (Math.sin(angle) * radius);
 
-            enemies.add(new Enemy(x + offsetX, y + offsetY, 50, Type.NORMAL));
+            enemies.add(new Enemy(x + offsetX, y + offsetY, 50, Type.SHOOTING));
         }
     }
 
@@ -123,23 +170,46 @@ public class Boss extends Enemy {
     public void areaAttack(Player player) {
         long currentTime = System.currentTimeMillis();
 
-        if (!isAreaAttacking) {
-            isAreaAttacking = true;
-            areaAttackStartTime = currentTime;
-        }
-
-        if (currentTime - areaAttackStartTime <= AREA_ATTACK_DURATION) {
-            int attackRadius = 400;
-            double distance = Math.sqrt(Math.pow(player.getX() - (x + BOSS_SIZE / 2), 2) + Math.pow(player.getY() - (y + BOSS_SIZE / 2), 2));
-            if (distance <= attackRadius / 2) {
-                player.hit(1);
+        if (isPreparingAreaAttack) {
+            if (currentTime - areaAttackPrepareTime >= AREA_ATTACK_DELAY) {
+                isPreparingAreaAttack = false;
+                isAreaAttacking = true;
+                areaAttackStartTime = currentTime;
+            }
+        } else if (isAreaAttacking) {
+            if (currentTime - areaAttackStartTime <= AREA_ATTACK_DURATION) {
+                int attackRadius = 400;
+                double distance = Math.sqrt(Math.pow(player.getX() - (x + BOSS_SIZE / 2), 2) +
+                        Math.pow(player.getY() - (y + BOSS_SIZE / 2), 2));
+                if (distance <= attackRadius / 2) {
+                    player.hit(1);
+                }
+            } else {
+                isAreaAttacking = false;
             }
         } else {
-            isAreaAttacking = false;
+            isPreparingAreaAttack = true;
+            areaAttackPrepareTime = currentTime;
         }
     }
-
     public void updateBossBehavior(Player player, CopyOnWriteArrayList<Enemy> enemies) {
+        if (isDead) {
+            return;
+        }
+
+        if (hp <= 0 && !isDying) {
+            isDying = true;
+            deathStartTime = System.currentTimeMillis();
+            return;
+        }
+
+        if (isDying) {
+            if (deathFrame >= deathTextures.length) {
+                isDead = true;
+            }
+            return;
+        }
+
         long currentTime = System.currentTimeMillis();
 
         if (!isDashing && !isAreaAttacking && !isPreparingForDash) {
@@ -174,5 +244,13 @@ public class Boss extends Enemy {
 
     protected int getWidth() {
         return BOSS_SIZE;
+    }
+
+    public boolean isDead() {
+        return isDead;
+    }
+
+    public boolean isDying() {
+        return isDying;
     }
 }

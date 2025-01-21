@@ -19,11 +19,12 @@ public class Collisions {
         this.gameOver = false;
     }
 
-    public void checkCollisions(int killCount) {
+    public void checkCollisions() {
         Rectangle playerCollider = player.getCollider();
         List<Enemy> enemiesToRemove = new ArrayList<>();
         List<Arrow> arrowsToRemove = new ArrayList<>();
 
+        // Kontrola kolizí střel nepřátel s hráčem
         for (Enemy enemy : enemies) {
             if (enemy.getType() == Enemy.Type.SHOOTING) {
                 Iterator<EnemyProjectile> projectileIterator = enemy.getProjectiles().iterator();
@@ -40,6 +41,8 @@ public class Collisions {
                 }
             }
         }
+
+        // Kontrola melee útoku hráče
         if (player.isMeleeAttackActive() && System.currentTimeMillis() - player.getMeleeAttackStartTime() < 50) {
             MeleeAttack meleeAttack = player.getMeleeAttack();
             int meleeX = meleeAttack.getX();
@@ -48,34 +51,50 @@ public class Collisions {
             int meleeAngle = meleeAttack.getAngle();
 
             for (Enemy enemy : enemies) {
-                int dx = enemy.getX() + enemy.getWidth() / 2 - meleeX;
-                int dy = enemy.getY() + enemy.getWidth() / 2 - meleeY;
-                double distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance <= meleeRadius) {
-                    double enemyAngle = Math.toDegrees(Math.atan2(dy, dx));
-                    enemyAngle = (enemyAngle + 360) % 360;
-                    double normalizedAttackAngle = (meleeAngle + 360) % 360;
-                    double angleDifference = Math.abs(normalizedAttackAngle - enemyAngle);
-                    if (angleDifference > 180) angleDifference = 360 - angleDifference;
-                    if (angleDifference <= 90) {
-                        enemy.hit(player.getDamage());
-                        if (enemy.getHp() <= 0) {
-                            enemiesToRemove.add(enemy);
-                            GamePanel.killCountPlus();
-                            player.earnCoins(10);
+                if (!(enemy instanceof Boss boss) || !boss.isDying) { // Neútočí na bosse během jeho smrti
+                    int dx = enemy.getX() + enemy.getWidth() / 2 - meleeX;
+                    int dy = enemy.getY() + enemy.getWidth() / 2 - meleeY;
+                    double distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance <= meleeRadius) {
+                        double enemyAngle = Math.toDegrees(Math.atan2(dy, dx));
+                        enemyAngle = (enemyAngle + 360) % 360;
+                        double normalizedAttackAngle = (meleeAngle + 360) % 360;
+                        double angleDifference = Math.abs(normalizedAttackAngle - enemyAngle);
+                        if (angleDifference > 180) angleDifference = 360 - angleDifference;
+                        if (angleDifference <= 90) {
+                            enemy.hit(player.getDamage());
+                            if (enemy.getHp() <= 0 && !(enemy instanceof Boss)) {
+                                enemiesToRemove.add(enemy);
+                                GamePanel.killCountPlus();
+                                player.earnCoins(10);
+                            }
                         }
                     }
                 }
             }
         }
+
+        // Kontrola smrti bossů
         for (Enemy enemy : enemies) {
-            enemy.moveTowards(player.getX(), player.getY());
+            if (enemy instanceof Boss boss) {
+                if (boss.isDead()) {
+                    enemiesToRemove.add(enemy); // Boss bude odstraněn až po dokončení animace smrti
+                }
+            }
+        }
+
+        // Pohyb nepřátel a jejich kolize s hráčem
+        for (Enemy enemy : enemies) {
+            if (!(enemy instanceof Boss boss) || !boss.isDying) { // Boss se nehýbe během animace smrti
+                enemy.moveTowards(player.getX(), player.getY());
+            }
             Rectangle enemyCollider = enemy.getCollider();
 
+            // Exploze hráče
             for (Explosion explosion : player.getExplosions()) {
                 if (explosion.isInRange(enemy.getX(), enemy.getY())) {
                     enemy.hit(100);
-                    if (enemy.getHp() <= 0) {
+                    if (enemy.getHp() <= 0 && !(enemy instanceof Boss)) {
                         enemiesToRemove.add(enemy);
                         GamePanel.killCountPlus();
                         player.earnCoins(10);
@@ -96,6 +115,7 @@ public class Collisions {
             }
         }
 
+        // Střely hráče
         for (Arrow arrow : arrows) {
             if (arrow.move()) {
                 arrowsToRemove.add(arrow);
@@ -106,7 +126,7 @@ public class Collisions {
                     if (arrowCollider.intersects(enemyCollider)) {
                         enemy.hit(player.getDamage());
                         arrowsToRemove.add(arrow);
-                        if (enemy.getHp() <= 0) {
+                        if (enemy.getHp() <= 0 && !(enemy instanceof Boss)) {
                             enemiesToRemove.add(enemy);
                             GamePanel.killCountPlus();
                             player.earnCoins(10);
@@ -117,11 +137,15 @@ public class Collisions {
             }
         }
 
-        resolveEnemyCollisions();
-
+        // Odstraňování střel a nepřátel
         arrows.removeAll(arrowsToRemove);
         enemies.removeAll(enemiesToRemove);
+
+        // Vyřešení kolizí mezi nepřáteli
+        resolveEnemyCollisions();
     }
+
+
 
     private void resolveEnemyCollisions() {
         for (int i = 0; i < enemies.size(); i++) {

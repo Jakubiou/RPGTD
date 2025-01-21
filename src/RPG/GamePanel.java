@@ -16,6 +16,7 @@ public class GamePanel extends JPanel implements ActionListener {
     private JButton nextWaveButton;
     private AbilityPanel abilityPanel;
     private boolean abilityPanelVisible;
+    private boolean upgradePanelVisible;
     public static int[][] map;
     public static int mapWidth, mapHeight;
     public static final int BLOCK_SIZE = 64;
@@ -40,6 +41,7 @@ public class GamePanel extends JPanel implements ActionListener {
     public static int cameraX, cameraY;
     private static int killCount;
     protected static Soundtrack backgroundMusic;
+    private UpgradePanel upgradePanel;
 
     public GamePanel(RPGGame game, Player player) {
         this.game = game;
@@ -111,6 +113,13 @@ public class GamePanel extends JPanel implements ActionListener {
     private void initializeAbilityPanel() {
         abilityPanel = new AbilityPanel(this, player);
         add(abilityPanel);
+    }
+    protected void initializeUpgradePanel() {
+        upgradePanel = new UpgradePanel(this, player);
+        add(upgradePanel);
+        upgradePanel.showPanel();
+        gameOverPanel.setVisible(false);
+        upgradePanelVisible = true;
     }
 
     private void stopGame() {
@@ -261,10 +270,7 @@ public class GamePanel extends JPanel implements ActionListener {
             }
         });
 
-
-
-
-        timer = new Timer(20, this);
+        timer = new Timer(15, this);
         waveNumber = 0;
         try {
             Thread.sleep(100);
@@ -349,6 +355,9 @@ public class GamePanel extends JPanel implements ActionListener {
     public void savePlayerStatus(){
         player.saveState("player_save.dat");
     }
+    public void savePlayerCoins(){
+        player.saveCoins("player_save.dat");
+    }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -378,7 +387,7 @@ public class GamePanel extends JPanel implements ActionListener {
             g.fillRect(0, 0, getWidth(), getHeight());
         }
 
-        if (gameOver) {
+        if (gameOver && !upgradePanelVisible) {
             gameOverPanel.setVisible(true);
             menuButton.setVisible(false);
         }
