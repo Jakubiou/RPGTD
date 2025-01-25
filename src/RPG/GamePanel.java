@@ -95,8 +95,14 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void restartGame() {
+        stopGame();
+        backgroundMusic.stop();
         game.dispose();
         new RPGGame();
+        enemies.clear();
+        arrows.clear();
+        collisions = null;
+        spawningEnemies = null;
     }
 
     private void loadBlockImages() {
@@ -343,8 +349,11 @@ public class GamePanel extends JPanel implements ActionListener {
 
             if (player.getHp() <= 0) {
                 gameOver = true;
-                setPreferredSize(new Dimension(PANEL_WIDTH / 2, PANEL_HEIGHT / 2));
-                revalidate();
+                gameOverPanel.setVisible(true);
+                menuButton.setVisible(false);
+                savePlayerCoins();
+                player.saveLocation("player_save.dat");
+                loadPlayerStatus();
             }
             repaint();
         }
@@ -357,6 +366,9 @@ public class GamePanel extends JPanel implements ActionListener {
     }
     public void savePlayerCoins(){
         player.saveCoins("player_save.dat");
+    }
+    public void loadPlayerStatus(){
+        player = Player.loadState("player_save.dat");
     }
 
     @Override
