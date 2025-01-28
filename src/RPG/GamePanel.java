@@ -95,14 +95,18 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     public void restartGame() {
+        closeGame();
+        new RPGGame();
+    }
+
+    public void closeGame(){
         stopGame();
         backgroundMusic.stop();
-        game.dispose();
-        new RPGGame();
         enemies.clear();
         arrows.clear();
         collisions = null;
         spawningEnemies = null;
+        game.dispose();
     }
 
     private void loadBlockImages() {
@@ -177,6 +181,7 @@ public class GamePanel extends JPanel implements ActionListener {
 
         if (player == null) {
             player = new Player(mapWidth * BLOCK_SIZE / 2, mapHeight * BLOCK_SIZE / 2, 100);
+            //savePlayerStatus();
         } else {
             player = Player.loadState(saveFilePath);
             player.setX(mapWidth * BLOCK_SIZE / 2);
@@ -294,9 +299,8 @@ public class GamePanel extends JPanel implements ActionListener {
         arrows.clear();
         killCount = 0;
 
-        spawningEnemies.spawnBoss();
             switch (waveNumber) {
-                case 1:
+                case 10:
                     spawningEnemies.spawnEnemies(0, 0, 10, 0, 0);
                     break;
                 case 2:
@@ -304,6 +308,9 @@ public class GamePanel extends JPanel implements ActionListener {
                     break;
                 case 3:
                     spawningEnemies.spawnEnemies(7, 3, 1, 5, 2);
+                    break;
+                case 1:
+                    spawningEnemies.spawnBoss();
                     break;
                 default:
                     spawningEnemies.spawnEnemies(waveNumber * 4, waveNumber * 2, waveNumber * 3, waveNumber * 3, 5);
@@ -331,17 +338,22 @@ public class GamePanel extends JPanel implements ActionListener {
 
             collisions.checkCollisions();
             gameOver = collisions.isGameOver();
+            boolean bossDead = false;
 
             for (Enemy enemy : enemies) {
                 if (enemy instanceof Boss) {
                     Boss boss = (Boss) enemy;
-                    boss.updateBossBehavior(player, enemies);
+                    if (boss.isDead) {
+                        bossDead = true;
+                    }else {
+                        boss.updateBossBehavior(player, enemies);
+                    }
                 } else if (enemy.getType() == Enemy.Type.SHOOTING) {
                     enemy.updateProjectiles();
                 }
             }
 
-            if (killCount > waveNumber * 10 && !gameOver) {
+            if ((killCount > waveNumber * 10 || bossDead) && !gameOver) {
                 stopGame();
                 nextWaveButton.setVisible(true);
                 abilityPanel.showPanel();
