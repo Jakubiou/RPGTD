@@ -12,7 +12,7 @@ public class Enemy {
     private static final long SHOOT_INTERVAL = 5000;
     private long lastShootTime = 0;
     public static final int NORMAL_SIZE = 37;
-    public static final int GIANT_SIZE = 64;
+    public static final int GIANT_SIZE = 128;
     public static final int SMALL_SIZE = 32;
     public static final int SHOOTING_SIZE = 60;
     protected int x;
@@ -79,12 +79,14 @@ public class Enemy {
                 e.printStackTrace();
             }
         } else if (type == Type.GIANT) {
-            giantTextures = new  Image[4];
+            giantTextures = new  Image[6];
             try {
-                giantTextures[0] = ImageIO.read(new File("res/rpg/enemy/Enemy_giant1.png"));
-                giantTextures[1] = ImageIO.read(new File("res/rpg/enemy/Enemy_giant2.png"));
-                giantTextures[2] = ImageIO.read(new File("res/rpg/enemy/Enemy_giant3.png"));
-                giantTextures[3] = ImageIO.read(new File("res/rpg/enemy/Enemy_giant4.png"));
+                giantTextures[0] = ImageIO.read(new File("res/rpg/enemy/Enemy_golem1.png"));
+                giantTextures[1] = ImageIO.read(new File("res/rpg/enemy/Enemy_golem2.png"));
+                giantTextures[2] = ImageIO.read(new File("res/rpg/enemy/Enemy_golem3.png"));
+                giantTextures[3] = ImageIO.read(new File("res/rpg/enemy/Enemy_golem4.png"));
+                giantTextures[4] = ImageIO.read(new File("res/rpg/enemy/Enemy_golem5.png"));
+                giantTextures[5] = ImageIO.read(new File("res/rpg/enemy/Enemy_golem6.png"));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -111,7 +113,7 @@ public class Enemy {
 
     public boolean isOffScreen() {
         int screenWidth = 6120;
-        int screenHeight = 3200;
+        int screenHeight = 3600;
         return (x + getWidth() < 0 || x > screenWidth || y + getHeight() < 0 || y > screenHeight);
     }
 
