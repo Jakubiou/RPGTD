@@ -12,30 +12,30 @@ import java.util.Iterator;
 import static com.sun.java.accessibility.util.AWTEventMonitor.addMouseMotionListener;
 
 public class Player implements Serializable {
-    protected static int WIDTH = 31;
+    protected static int WIDTH = 48;
     private ArrayList<Explosion> explosions = new ArrayList<>();
     private long explosionCooldown = 5000;
     private long lastExplosionTime = 0;
     private int explosionRange = 100;
-    public static final int HEIGHT = 45;
+    public static final int HEIGHT = 48;
     private int x, y, hp;
     private int speed = 5;
     private int heal = 0;
     private int coins = 0;
-    private int damage = 50;
+    private int damage = 5;
     private int attackSpeed = 5;
     private int defense = 0;
     private boolean up, down, left, right;
     private int currentFrame = 0;
     private long lastFrameChange = 0;
-    private long frameDuration = 100;
+    private long frameDuration = 200;
     private transient Image[] rightTextures, leftTextures, idleTextures, upTextures, downTextures;
     private transient Image hpBarFrame1, hpBarFrame2, hpBarFrame3;
 
     public static final int PANEL_WIDTH = 6120;
-    public static final int PANEL_HEIGHT = 3200;
+    public static final int PANEL_HEIGHT = 3600;
     private boolean dashing = false;
-    private int dashDistance = 1000;
+    private int dashDistance = 100;
     private int dashSpeed = 20;
     private int dashDirectionX = 0, dashDirectionY = 0;
     private int dashProgress = 0;
@@ -106,14 +106,11 @@ public class Player implements Serializable {
 
     public void draw(Graphics g) {
         Image[] textures = idleTextures;
-        WIDTH = 31;
 
         if (right) {
             textures = rightTextures;
-            WIDTH = 24;
         } else if (left) {
             textures = leftTextures;
-            WIDTH = 24;
         } else if (up) {
             textures = upTextures;
         } else if (down) {
@@ -404,6 +401,20 @@ public class Player implements Serializable {
                 }
             } else {
                 System.err.println("No existing player found to save coins.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error saving coins to player file: " + e.getMessage());
+        }
+    }
+    public void saveLocation(String filePath) {
+        try {
+            Player existingPlayer = loadState(filePath);
+            if (existingPlayer != null) {
+                existingPlayer.setX(this.x);
+                existingPlayer.setY(this.y);
+                try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
+                    oos.writeObject(existingPlayer);
+                }
             }
         } catch (Exception e) {
             System.err.println("Error saving coins to player file: " + e.getMessage());
