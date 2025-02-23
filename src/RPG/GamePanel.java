@@ -12,7 +12,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 public class GamePanel extends JPanel implements ActionListener {
     public static final int PANEL_WIDTH = 1530;
-    public static final int PANEL_HEIGHT = 800;
+    public static final int PANEL_HEIGHT = 900;
     private JButton nextWaveButton;
     private AbilityPanel abilityPanel;
     private boolean abilityPanelVisible;
@@ -310,7 +310,8 @@ public class GamePanel extends JPanel implements ActionListener {
                     spawningEnemies.spawnEnemies(7, 3, 1, 5, 2);
                     break;
                 case 1:
-                    spawningEnemies.spawnBoss();
+                    //spawningEnemies.spawnBoss();
+                    spawningEnemies.spawnEnemies(0, 1, 0, 0, 0);
                     break;
                 default:
                     spawningEnemies.spawnEnemies(waveNumber * 4, waveNumber * 2, waveNumber * 3, waveNumber * 3, 5);
@@ -399,13 +400,12 @@ public class GamePanel extends JPanel implements ActionListener {
 
         g2d.translate(cameraX, cameraY);
 
-        Iterator<Enemy> enemyIterator = enemies.iterator();
-        while (enemyIterator.hasNext()) {
-            Enemy enemy = enemyIterator.next();
-           if (enemy.getType() == Enemy.Type.SHOOTING) {
+        for (Enemy enemy : enemies) {
+            if (enemy.getType() == Enemy.Type.SHOOTING) {
                 enemy.drawProjectiles(g);
             }
         }
+
         if (abilityPanelVisible) {
             g.setColor(new Color(0, 0, 0, 150));
             g.fillRect(0, 0, getWidth(), getHeight());
@@ -441,12 +441,11 @@ public class GamePanel extends JPanel implements ActionListener {
     public void drawEnemies(Graphics g) {
         for (int i = 0; i < enemies.size(); i++) {
             Enemy enemy = enemies.get(i);
-
-            enemy.draw(g);
-
             if (enemy.isOffScreen()) {
                 enemies.remove(i);
                 i--;
+            } else {
+                enemy.draw(g);
             }
         }
     }
